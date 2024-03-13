@@ -76,19 +76,20 @@ def user_created_def(user):
 # 1개의 테이블에서 2개 속성 값을 가져오기 위해 딕셔너리 사용
 def user_count_def(user):
     
-    try:
-        # 로그인한 유저의 count 데이터 조회(save 기능을 쓰기 위해 분리해서 작성)
-        user_count_data = Count.objects.get(user=user)
-    except ObjectDoesNotExist:
-        # Count 객체가 존재하지 않는 경우, 새로운 Count 객체를 생성하여 초기화
-        user_count_data = Count.objects.create(user=user, question_count=2, answer_count=1)
-        user_count_data.save()
+    user_count_data = Count.objects.get(user=user)
+    
+    # try:
+    #     # 로그인한 유저의 count 데이터 조회(save 기능을 쓰기 위해 분리해서 작성)
+    #     user_count_data = Count.objects.get(user=user)
+    # except ObjectDoesNotExist:
+    #     # Count 객체가 존재하지 않는 경우, 새로운 Count 객체를 생성하여 초기화
+    #     user_count_data = Count.objects.create(user=user, question_count=2, answer_count=1)
+    #     user_count_data.save()
         
     question_count_data = user_count_data.question_count
     answer_count_data = user_count_data.answer_count
     
     count_data = {
-        "user_count_data": user_count_data,
         "question_count_data": question_count_data,
         "answer_count_data": answer_count_data,
     }

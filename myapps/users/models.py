@@ -21,6 +21,7 @@ class User(AbstractBaseUser):
     # created_at, updated_at, login_at은 속성명 자체로 자동처리 기능이 있다.
     # created_at(해당 레코드가 만들어질 때), updated_at(해당 레코드가 업데이트 될 때), login_at(해당 레코드가 로그인 할 때)
     
+    # 포스트와 피드의 좋아요 필드
     like_posts = models.ManyToManyField("posts.Post", verbose_name="좋아요한 포스트", related_name="like_post_users")
     like_feeds = models.ManyToManyField("feeds.Feed", verbose_name="좋아요한 피드", related_name="like_feed_users")
     
