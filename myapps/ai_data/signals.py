@@ -1,6 +1,6 @@
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
-from models import AiQuestion, AiAnswer, Count
+from .models import AiQuestion, AiAnswer, Count
 from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 
