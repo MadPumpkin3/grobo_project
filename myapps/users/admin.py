@@ -1,8 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User
+# from django.contrib.auth.forms import UserCreationForm
+# from django.contrib.auth import get_user_model
 
 # Register your models here.
+
+# user 추가 시, 모든 속성을 일괄로 입력하고 싶어서 user 추가 폼을 변경하는 클래스(그러나 제대로 안돼서 포기..)
+# class CustomUserCreationForm(UserCreationForm):
+#     class Meta(UserCreationForm.Meta):
+#         model = User
 
 class FollowingInline(admin.TabularInline):
     model = User.following.through
@@ -20,7 +27,7 @@ class FollowersInline(admin.TabularInline):
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('id', 'user_id', 'username', 'email', 'is_staff', 'login_at')
+    list_display = ('id', 'user_id', 'username', 'email', 'is_staff', 'login_at', 'updated_at', 'created_at')
     # 관리자가 아래 필드를 기준으로 사용자를 필터링 할 수 있다.
     list_filter = ('username', 'created_at', 'login_at')
     # 관리자가 아래 필드를 기준으로 사용자를 검색할 수 있다.
@@ -36,3 +43,6 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal=('like_posts', 'like_feeds') 
     
     inlines = [FollowingInline, FollowersInline]
+    
+    # user 추가 시, 모든 속성을 일괄로 입력하고 싶어서 user 추가 폼을 변경하는 클래스(그러나 제대로 안돼서 포기..)
+    # add_form = CustomUserCreationForm

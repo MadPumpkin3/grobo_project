@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 
 # superuser(관리자 계정)생성을 위한 모델
 class UserManager(BaseUserManager):
+    # 유저를 생성하는 메서드 입니다.
     def create_user(self, user_id, email, password=None):
         if not user_id:
             raise ValueError("유저 id가 없습니다.")
@@ -20,6 +21,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     
+    # 관리자를 생성하는 메서드 입니다.
     def create_superuser(self, user_id, email, password):
         user = self.create_user(user_id, email=email, password=password)
         user.is_staff = True
