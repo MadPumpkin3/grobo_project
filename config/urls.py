@@ -17,12 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from .view import Index
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', Index.as_view(), name='index'),
-    path('users/', include('myapps.users.users_urls.py')),
-    path('posts/', include('myapps.posts.posts_urls.py')),
-    path('feeds/', include('myapps.feeds.feeds_urls.py')),
-    path('ai_data/', include('myapps.ai_data.ai_data_urls.py')),
+    path('users/', include('myapps.users.users_urls')),
+    path('posts/', include('myapps.posts.posts_urls')),
+    path('feeds/', include('myapps.feeds.feeds_urls')),
+    path('ai_data/', include('myapps.ai_data.ai_data_urls')),
 ]
+
+urlpatterns += static(
+    prefix=settings.MEDIA_URL, 
+    document_root=settings.MEDIA_ROOT,
+    )

@@ -5,5 +5,4 @@ from .models import User
 # Create your views here.
 
 class Login(FormView):
-    template_name = 'users/login.html'
-    model = User
+    pass

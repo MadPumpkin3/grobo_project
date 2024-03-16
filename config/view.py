@@ -7,5 +7,5 @@ class Index(ListView):
     
     def get_context_data(self, **kwargs): # **kwargs : Index 클래스에서 받은 request객체를 받는다.
         context = super().get_context_data(**kwargs)
-        context['text'] = 'Hellow, Grobo!'
+        context['test'] = 'Hellow, Grobo!'
         return context
