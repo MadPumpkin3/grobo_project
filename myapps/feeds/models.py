@@ -5,11 +5,14 @@ from django.db import models
 class Feed(models.Model):
     user = models.ForeignKey("users.User", verbose_name="작성자", on_delete=models.CASCADE)
     context = models.TextField("내용", blank=True)
-    image_url = models.ImageField("피드 이미지", upload_to="feed/image", blank=False, null=False)
     created = models.DateTimeField("작성일시", auto_now_add=True)
     
     tag = models.ManyToManyField("feeds.HashTag", verbose_name="태그명", related_name="tag_feeds")
     
+class FeedImage(models.Model):
+    feed = models.ForeignKey("Feed", verbose_name="피드", on_delete=models.CASCADE)
+    image_url = models.ImageField("피드 이미지", upload_to="feed/image", blank=False, null=False)    
+
 class FeedComment(models.Model):
     user = models.ForeignKey(
         "users.User", 

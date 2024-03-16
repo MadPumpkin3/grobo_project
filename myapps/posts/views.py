@@ -1,4 +1,3 @@
-from typing import Any
 from django.shortcuts import render
 from .models import Post, PostComment
 from django.views import generic
