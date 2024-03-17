@@ -28,7 +28,7 @@ class PostAdmin(admin.ModelAdmin):
         ('추가내용', {'fields': ('tag',)}),
     ]
     
-    inlines = [PostCommentInline, PostImageInline]
+    inlines = [PostImageInline, PostCommentInline]
     
     # Post모델의 M2M필드인 'tag'필드가 기본 필드 형태로는 가시성과 조작성이 좋지 않아서 개선하기 위해 하는 작업
     # formfield_overrides : 특정 필드 유형에 대한 기본 입력 위젯을 재정의하는데 사용되는 옵션
