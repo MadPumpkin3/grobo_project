@@ -1,6 +1,5 @@
-from typing import Any
 from django import forms
-from users.models import User, FollowRelation
+from users.models import User
 from django.contrib.auth import authenticate
 
 class LoginForm(forms.Form):
@@ -27,6 +26,7 @@ class LoginForm(forms.Form):
         if not authenticate(user_id=user_id, password=password):
             raise ValueError("비밀번호가 일치하지 않습니다.")
     
+# password 재확인을 위해 User모델에 없는 password2필드를 생성하는 과정에서 Form클래스가 적합하다고 판단
 class JoinForm(forms.Form):
     username = forms.CharField(
         label='이름', max_length=10, required=True, widget=forms.TextInput(attrs={'placeholder': '이름을 입력하세요.'})
@@ -51,7 +51,7 @@ class JoinForm(forms.Form):
     short_description = forms.CharField(
         label='소개글', required=False, widget=forms.Textarea(attrs={'placeholder': '선택사항입니다.'})
     )
-    
+
     def clean_user_id(self):
         user_id = self.cleaned_data.get('user_id')
         
@@ -77,12 +77,41 @@ class JoinForm(forms.Form):
     
     # password1필드와 password2필드 2개의 필드를 비교하기 때문에 개별 유효성 검사는 불가능하여 clean()메서드로 정의
     def clean(self):
-        password1 = self.cleaned_data.get('password1')
+        password = self.cleaned_data.get('password')
         password2 = self.cleaned_data.get('password2')
         
-        if not password1 or not password2:
+        if not password or not password2:
             raise forms.ValidationError('비밀번호를 입력해주세요.')
-        elif password1 != password2:
+        elif password != password2:
             raise forms.ValidationError('비밀번호가 다릅니다.')
-        
-        return password1
+   
+# password 재확인을 위해 User모델에 없는 password2필드를 생성하는 과정에서 ModelForm클래스는 사용할 수 없다고 판단     
+# class JoinForm(forms.ModelForm):
+#     class Meta:
+#         model = User
+#         fields = ['username', 'user_id', 'password', 'password2', 'email', 'profile_image', 'short_description']
+#         widgets = {
+#             'username': forms.CharField(
+#                 widget=forms.TextInput(attrs={'placeholder': '이름을 입력하세요.'})
+#                 ),
+#             'user_id': forms.CharField(
+#                 widget=forms.TextInput(attrs={'placeholder': '아이디를 입력하세요.'})
+#                 ),
+#             'password': forms.CharField(
+#                 widget=forms.TextInput(attrs={'placeholder': '비밀번호를 입력하세요.'})
+#                 ),
+#             'password2': forms.CharField(
+#                 widget=forms.TextInput(attrs={'placeholder': '비밀번호를 재입력하세요.'})
+#                 ),
+#             'email': forms.EmailField(
+#                 widget=forms.TextInput(attrs={'placeholder': 'abcd@google.com'})
+#                 ),
+#             # ImageField여서 위젯으로 FileInput을 사용했다.
+#             'profile_image': forms.ImageField(
+#                 widget=forms.FileInput(attrs={'placeholder': '선택사항입니다.'})
+#                 ),
+#             # 위젯을 textarea로 설정해서 장문의 글이 들어갈 수 있도록 수정
+#             'short_description': forms.CharField(
+#                 widget=forms.Textarea(attrs={'placeholder': '선택사항입니다.'})
+#             ),
+#         }
