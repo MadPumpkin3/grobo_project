@@ -12,5 +12,6 @@ class MultiFileField(forms.MultiValueField):
     # 그러나 현재 유효성 검사에 대한 처리 코드가 없어서, 처리 코드를 compress메서드에 직접 추가해줘야 한다.
     # data_list는 리스트 형태로 제공된다.
     def compress(self, data_list):
-        image_urls = [image.strip() for image in data_list if image.strip()]
-        return image_urls
+        if data_list:
+            image_urls = [image.strip() for image in data_list if image.strip()]
+            return image_urls

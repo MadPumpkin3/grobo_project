@@ -3,7 +3,7 @@ from myapps.posts.models import Post, PostImage, PostComment
 from myapps.form.custom_form import MultiFileField
 
 # 중요: view에서 'PostCreateForm'과 'PostImageForm'이 하나의 폼처럼 나오게 작업해야함.
-# 작업: PostImageFormset = modelformset_factory(PostImage, form=PostImageForm, extra=1)
+# 작업: PostImageFormset = formset_factory(PostImage, form=PostImageForm, extra=1)
 # view에서 폼 생성시, 'PostCreateForm'를 먼저 호출하고, 그 뒤에 'PostImageFormset'를 호출해서 'form=PostImageForm'연결시키기
 
 # 포스트 생성 폼
@@ -14,7 +14,7 @@ class PostCreateForm(forms.ModelForm):
         fields = ['title', 'context', 'tag']
         widgets = {
             'title': forms.CharField(widget=forms.TextInput(attrs={"placeholder": "제목을 입력하세요."})),
-            'context': forms.CharField(widget=forms.Textarea(attrs={"placeholder": "내용을 입력하세요."})),
+            'context': forms.Textarea(attrs={"placeholder": "내용을 입력하세요."}),
             'tag': forms.CharField(widget=forms.TextInput(attrs={"placeholder": "#으로 태그를 구분해서 입력하세요"})),
         }
     
@@ -35,6 +35,7 @@ class PostCreateForm(forms.ModelForm):
 class PostImageForm(forms.Form):
     # 여려개의 이미지 파일을 받기 위해 MultiFileField클래스를 만들었음.
     image_url = MultiFileField(label='이미지', required=False, 
+                               # ClearableFileInput : 파일 입력 필드에 파일을 선택하거나 현재 선택된 파일을 지울 수 있는 클리어 버튼을 제공
                                widget=forms.ClearableFileInput(attrs={'placeholder': '선택사항입니다.', 'multiple': True}))
 
 # 포스트 댓글 생성 폼
@@ -44,5 +45,5 @@ class PostCommentForm(forms.ModelForm):
         model = PostComment
         fields = ['comment']
         widgets = {
-            "comment": forms.CharField(widget=forms.Textarea(attrs={"placeholder": "댓글을 입력하세요."})),
+            "comment": forms.Textarea(attrs={"placeholder": "댓글을 입력하세요."}),
         }

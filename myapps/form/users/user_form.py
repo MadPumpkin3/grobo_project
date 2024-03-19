@@ -48,8 +48,8 @@ class JoinForm(forms.Form):
         label='프로필 이미지', required=False, widget=forms.FileInput(attrs={'placeholder': '선택사항입니다.'})
         )
     # 위젯을 textarea로 설정해서 장문의 글이 들어갈 수 있도록 수정
-    short_description = forms.CharField(
-        label='소개글', required=False, widget=forms.Textarea(attrs={'placeholder': '선택사항입니다.'})
+    short_description = forms.Textarea(
+        label='소개글', required=False, attrs={'placeholder': '선택사항입니다.'}
     )
 
     def clean_user_id(self):
