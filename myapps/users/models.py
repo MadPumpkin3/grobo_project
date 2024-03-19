@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 
@@ -46,6 +47,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField("회원가입 일시", auto_now_add=True, blank=True)
     updated_at = models.DateTimeField("최근 수정 일시", auto_now_add=True, blank=True)
     login_at = models.DateTimeField("최근 로그인 일시", auto_now=True, blank=True, null=True)
+    # 유저가 로그인 시, 포털 사이트(값:None) 또는 플랫폼 사이트(값:1)에 따라 이동할 수 있도록 필드 추가
+    # 데이터 입력 조건을 0 ~ 1로 제한
+    # 코드의 가독성과 명확성을 위해 bool형석으로도 할 수 있지만, 저장공간과 검색 성능 향상을 위해 0,1로만 작업
+    default_main_page = models.IntegerField(
+        "기본 메인 페이지", 
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(1)]
+        )
     
     # superuser(관리자 계정)생성을 위해 UserManager모델 연결
     objects = UserManager()

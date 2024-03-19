@@ -1,6 +1,7 @@
 from django import forms
-from users.models import User
+from myapps.users.models import User
 from django.contrib.auth import authenticate
+from myapps.common.models import DefaultMainPageChoices
 
 class LoginForm(forms.Form):
     user_id = forms.CharField(
@@ -9,6 +10,10 @@ class LoginForm(forms.Form):
     password = forms.CharField(
         label='비밀번호', max_length=255, required=True, widget=forms.TextInput(attrs={'placeholder': '비밀번호를 입력하세요.'})
         )
+    # 로그인 후, 이동하려는 메인 페이지 선택 필드 정의
+    default_main_page = forms.IntegerField(
+        label='기본 메인 페이지', required=True, widget=forms.RadioSelect(choices=DefaultMainPageChoices.choices)
+    )
     
     def clean(self):
         # cleaned_data는 딕셔너리이다.
@@ -47,9 +52,17 @@ class JoinForm(forms.Form):
     profile_image = forms.ImageField(
         label='프로필 이미지', required=False, widget=forms.FileInput(attrs={'placeholder': '선택사항입니다.'})
         )
-    # 위젯을 textarea로 설정해서 장문의 글이 들어갈 수 있도록 수정
-    short_description = forms.Textarea(
-        label='소개글', required=False, attrs={'placeholder': '선택사항입니다.'}
+    # 위젯을 textarea로 설정해서 장문의 글이 들어갈 수 있도록 수정(label과 required의 인수를 사용할 수 있도록 charfield 사용)
+    short_description = forms.CharField(
+        label='소개글', 
+        required=False,
+        widget=forms.Textarea(attrs={'placeholder': '선택사항입니다.'})
+        )
+    # 회원가입 시, 기본 메인 페이지 설정 필드
+    default_main_page = forms.IntegerField(
+        label='기본 메인 페이지',
+        required=True,
+        widget=forms.RadioSelect(choices=DefaultMainPageChoices.choices)
     )
 
     def clean_user_id(self):
