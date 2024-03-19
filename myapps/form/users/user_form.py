@@ -8,7 +8,8 @@ class LoginForm(forms.Form):
         label='아이디', max_length=64, required=True, widget=forms.TextInput(attrs={'placeholder': '아이디를 입력하세요.'})
         )
     password = forms.CharField(
-        label='비밀번호', max_length=255, required=True, widget=forms.TextInput(attrs={'placeholder': '비밀번호를 입력하세요.'})
+        # password 입력시, 입력 값이 보이지 않게 PasswordInput위젯으로 설정
+        label='비밀번호', max_length=255, required=True, widget=forms.PasswordInput(attrs={'placeholder': '비밀번호를 입력하세요.'})
         )
     # 로그인 후, 이동하려는 메인 페이지 선택 필드 정의
     default_main_page = forms.IntegerField(
@@ -20,16 +21,27 @@ class LoginForm(forms.Form):
         cleaned_data = super().clean()
         user_id = cleaned_data.get('user_id')
         password = cleaned_data.get('password')
+        default_main_page = cleaned_data.get('default_main_page')
         
-        try:
-            User.objects.get(user_id = user_id)
-        except User.DoesNotExist:
-            raise forms.ValidationError("해당 아이디는 존재하지 않습니다.")
+        # authenticate: 사용자 인증을 하는데 사용, 인증되면 해당 객체를 반환, 실패하면 None을 반환
+        user = authenticate(user_id=user_id, password=password)
         
-        # authenticate는 사용자 인증을 확인하기 위해 사용된다. 제공된 id와 password를 가지고 인증한다. 
-        # 인증되면 해당 사용자 객체를 반환하고, 실패하면 None을 반환한다.
-        if not authenticate(user_id=user_id, password=password):
-            raise ValueError("비밀번호가 일치하지 않습니다.")
+        if not user:
+            raise forms.ValidationError("아이디 또는 비밀번호가 올바르지 않습니다.")
+        
+        cleaned_data['user'] = user
+        cleaned_data['default_main_page'] = default_main_page
+        return cleaned_data
+    
+        # try:
+        #     User.objects.get(user_id = user_id)
+        # except User.DoesNotExist:
+        #     raise forms.ValidationError("해당 아이디는 존재하지 않습니다.")
+        
+        # # authenticate는 사용자 인증을 확인하기 위해 사용된다. 제공된 id와 password를 가지고 인증한다. 
+        # # 인증되면 해당 사용자 객체를 반환하고, 실패하면 None을 반환한다.
+        # if not authenticate(user_id=user_id, password=password):
+        #     raise ValueError("비밀번호가 일치하지 않습니다.")
     
 # password 재확인을 위해 User모델에 없는 password2필드를 생성하는 과정에서 Form클래스가 적합하다고 판단
 class JoinForm(forms.Form):
