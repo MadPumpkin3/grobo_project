@@ -1,19 +1,22 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.validators import MinValueValidator, MaxValueValidator
+from myapps.ai_data.models import Count
 
 # Create your models here.
 
 # superuser(관리자 계정)생성을 위한 모델
 class UserManager(BaseUserManager):
     # 유저를 생성하는 메서드 입니다.
-    def create_user(self, user_id, email, password=None):
+    # **extra_fields 매개변수로 폼에 입력된 기타 값들을 불러옵니다.
+    def create_user(self, user_id, email, password=None, **extra_fields):
         if not user_id:
             raise ValueError("유저 id가 없습니다.")
         user = self.model(
             user_id=user_id,
             # normalize_email : @뒤의 도메인 부분을 소문자로 바꿔주는 함수
             email=self.normalize_email(email),
+            **extra_fields
             )
         # 비밀번호를 안전하게 저장하기 위해 set_password로 해싱하여 저장한다.
         user.set_password(password)
@@ -23,12 +26,19 @@ class UserManager(BaseUserManager):
         return user
     
     # 관리자를 생성하는 메서드 입니다.
-    def create_superuser(self, user_id, email, password):
-        user = self.create_user(user_id, email=email, password=password)
-        user.is_staff = True
-        user.is_superuser = True
-        user.save(using=self._db)
-        return user
+    # **extra_fields 매개변수로 폼에 입력된 기타 값들을 불러옵니다.
+    def create_superuser(self, user_id, email, password, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        
+        # 관리자 계정 생성시 기본 세팅 값들이 True가 아닐 때, 오류 생성
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('관리자 계정의 staff 필드 값이 True가 아닙니다.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('관리자 계정의 superuser 필드 값이 True가 아닙니다.')
+        
+        # 관리자용 계정으로 세팅된 데이터들을 기본 유저 생성 메서드로 실행        
+        return self.create_user(user_id, email, password, **extra_fields)
 
 # 유저 모델(유저 테이블)
 class User(AbstractBaseUser, PermissionsMixin):

@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout
 from django.shortcuts import redirect
 from django.views import generic
 from .models import User
+from myapps.ai_data.models import Count
 from myapps.form.users.user_form import LoginForm, JoinForm
 
 # Create your views here.
@@ -41,19 +42,22 @@ class Join(generic.FormView):
     success_url = reverse_lazy('users:login')
     
     def form_valid(self, form):
-        return super().form_valid(form)
+        # 유효성을 통과한 폼 데이터를 받기 위해서는 form.cleaned_data로 불러와야 한다.
+        cleaned_data = form.cleaned_data
+        # create_user은 유저 데이터를 생성하는 메서드, 비밀번호를 해시로 저장해준다.
+        user = User.objects.create_user(
+            username = cleaned_data['username'],
+            user_id = cleaned_data['user_id'],
+            password = cleaned_data['password1'],
+            email = cleaned_data['email'],
+            profile_image = cleaned_data['profile_image'],
+            short_description = cleaned_data['short_description'],
+            default_main_page = cleaned_data['default_main_page'],
+        )
+        
+        Count.objects.create(user=user)
+        
+        return redirect(self.success_url)
     
     def form_invalid(self, form):
         return super().form_invalid(form)
-    
-# 초기 페이지(index)에서 사용자의 로그인 여부에 따라 '로그인' 클릭시 이동되게 설정
-class LoginStatus(generic.View):
-    def get(self, request):
-        if request.user.is_authenticated:
-            url = request.user.default_main_page
-            if url == 0:
-                return redirect('posts:posts_main')
-            else:
-                return redirect('feeds:feeds_main')
-        else:
-            return redirect('users:login')

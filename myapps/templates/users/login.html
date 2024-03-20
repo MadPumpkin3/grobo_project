@@ -1,9 +1,6 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <title>Grobo</title>
-</head>
-<body>
+{% extends 'base/base.html' %}
+
+{% block content %}
     <h1>Grobo 로그인 화면 입니다.</h1>
     <form method="post">
         {% csrf_token %}
@@ -11,5 +8,4 @@
         <button type="submit">로그인</button>
     </form>
     <a href="{% url 'users:join' %}">회원가입</a>
-</body>
-</html>
+{% endblock %}

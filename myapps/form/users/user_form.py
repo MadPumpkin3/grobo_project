@@ -53,10 +53,10 @@ class JoinForm(forms.Form):
         label='아이디', max_length=64, widget=forms.TextInput(attrs={'placeholder': '아이디를 입력하세요.'})
         )
     password1 = forms.CharField(
-        label='비밀번호', max_length=255, required=True, widget=forms.TextInput(attrs={'placeholder': '비밀번호를 입력하세요.'})
+        label='비밀번호', max_length=255, required=True, widget=forms.PasswordInput(attrs={'placeholder': '비밀번호를 입력하세요.'})
         )
     password2 = forms.CharField(
-        label='비밀번호 확인', max_length=255, required=True, widget=forms.TextInput(attrs={'placeholder': '비밀번호를 재입력하세요.'})
+        label='비밀번호 확인', max_length=255, required=True, widget=forms.PasswordInput(attrs={'placeholder': '비밀번호를 재입력하세요.'})
         )
     email = forms.EmailField(
         label='이메일', widget=forms.TextInput(attrs={'placeholder': 'abcd@google.com'})

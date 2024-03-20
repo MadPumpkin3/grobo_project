@@ -16,13 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from .view import Index
+from .views import Index, LoginStatus
 from django.conf.urls.static import static
 from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', Index.as_view(), name='index'),
+    # 웰컴 페이지(index)에 로그인 버튼 클릭시 login_statue 실행 후, 결과에 따라 페이지 이동
+    path('login_status/', LoginStatus.as_view(), name='login_status'),
     path('users/', include('myapps.users.users_urls')),
     path('posts/', include('myapps.posts.posts_urls')),
     path('feeds/', include('myapps.feeds.feeds_urls')),
