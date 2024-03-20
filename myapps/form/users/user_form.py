@@ -18,6 +18,7 @@ class LoginForm(forms.Form):
     
     def clean(self):
         # cleaned_data는 딕셔너리이다.
+        # clean_필드명()으로 개별 검사를 하지 않았기 때문에 '유효성 검사'가 진행되지 않아서, super().clean()으로 직접 실행해서 cleaned_data를 확보한다.
         cleaned_data = super().clean()
         user_id = cleaned_data.get('user_id')
         password = cleaned_data.get('password')
@@ -101,13 +102,15 @@ class JoinForm(forms.Form):
         return email
     
     # password1필드와 password2필드 2개의 필드를 비교하기 때문에 개별 유효성 검사는 불가능하여 clean()메서드로 정의
+    # clean_필드명()이 실행되면서 '유효성 검사'도 같이 실행되어 cleaned_data가 자동 생성된다.
+    # 그러면, 이미 생성된 cleaned_data를 clean()에서 self.cleaned_data.get로 활용할 수 있다.
     def clean(self):
-        password = self.cleaned_data.get('password')
+        password1 = self.cleaned_data.get('password1')
         password2 = self.cleaned_data.get('password2')
         
-        if not password or not password2:
+        if not password1 or not password2:
             raise forms.ValidationError('비밀번호를 입력해주세요.')
-        elif password != password2:
+        elif password1 != password2:
             raise forms.ValidationError('비밀번호가 다릅니다.')
    
 # password 재확인을 위해 User모델에 없는 password2필드를 생성하는 과정에서 ModelForm클래스는 사용할 수 없다고 판단     

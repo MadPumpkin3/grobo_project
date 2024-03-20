@@ -34,16 +34,26 @@ class Logout(generic.View):
     def post(self, request):
         logout(request)
         return redirect('users:login')
-    
+
 class Join(generic.FormView):
     form_class = JoinForm
     template_name = 'users/join.html'
     success_url = reverse_lazy('users:login')
     
     def form_valid(self, form):
-        pass
+        return super().form_valid(form)
     
     def form_invalid(self, form):
         return super().form_invalid(form)
-        
     
+# 초기 페이지(index)에서 사용자의 로그인 여부에 따라 '로그인' 클릭시 이동되게 설정
+class LoginStatus(generic.View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            url = request.user.default_main_page
+            if url == 0:
+                return redirect('posts:posts_main')
+            else:
+                return redirect('feeds:feeds_main')
+        else:
+            return redirect('users:login')
