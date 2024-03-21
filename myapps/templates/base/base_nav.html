@@ -1,0 +1,14 @@
+{% extends 'base/base.html' %}
+
+
+{% block css %}{% endblock %}
+
+{% block nav %}
+    <a href="{% url 'ai_data:ai_data_main' %}">ATDC - C type</a>
+    <a href="{% url 'posts:posts_main' %}">Grobo</a>
+    <a href="{% url 'feeds:feeds_main' %}">Grobat</a>
+    <a href="{% url 'users:logout' %}">Logout</a>
+{% endblock %}
+
+{% block content %}{% endblock %}
+{% block js %} {% endblock %}

@@ -41,6 +41,7 @@ class CustomUserAdmin(UserAdmin):
         ('추가필드', {'fields': ('profile_image', 
                              'short_description', 
                              'default_main_page')}),
+        ('좋아요', {'fields': ('like_posts', 'like_feeds')}),
         ('권한', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
     ]
     
@@ -56,6 +57,9 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal=('like_posts', 'like_feeds') 
     
     inlines = [FollowingInline, FollowersInline]
+    
+    # 필드 정렬 기준('username'을 기준으로 오름차순으로 정렬)
+    ordering = ['username']
     
     # user 추가 시, 모든 속성을 일괄로 입력하고 싶어서 user 추가 폼을 변경하는 클래스(그러나 제대로 안돼서 포기..)
     # add_form = CustomUserCreationForm

@@ -92,7 +92,7 @@ DATABASES = {
         'USER': 'grobo',
         'PASSWORD': 'Fpdjxpa37!',
         # 유동ip라서 주기적으로 수정 필요(나중에 고정 ip 삽입)
-        'HOST': '3.35.3.222',
+        'HOST': '3.35.26.120',
         'PORT': '3306',
         # mysql과 DBeaver 연결시 필수 사항 > 서버의 /etc/mysql/mysql.conf.d/mysqld.cnf 파일에서 port 활성화 및 port = 3306, 
         # bind-address = 0.0.0.0 으로 외부 ip에서도 접속 가능하도록 수정
@@ -135,11 +135,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "myapps/static"]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'myapps/static'),
+]
 # 디렉터리 위치를 리스트 형태로 감싸면, 나중에 추가적인 디렉터리 위치를 넣을 수 있다.
 
 MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / "myapps/media"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'myapps/media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

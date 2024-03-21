@@ -31,7 +31,8 @@ urlpatterns = [
     path('ai_data/', include('myapps.ai_data.ai_data_urls')),
 ]
 
+# 저장된 이미지를 불러오기 위한 설정
 urlpatterns += static(
-    prefix=settings.MEDIA_URL, 
+    settings.MEDIA_URL, 
     document_root=settings.MEDIA_ROOT,
     )

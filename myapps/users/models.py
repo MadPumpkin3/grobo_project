@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.validators import MinValueValidator, MaxValueValidator
-from myapps.ai_data.models import Count
 
 # Create your models here.
 
@@ -47,6 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     password = models.CharField("비밀번호", max_length=255, null=False, blank=False)
     # null은 데이터베이스에서 작동, blank는 폼에서 작동(폼 유효성 검사에 사용)
     email = models.EmailField("이메일", unique=True, null=False, blank=False)
+    # 크롬 브라우저의 버전 문제로 파일 업로드 기능이 안될 수 있다. 안돼면 크롬 업데이트를 진행하자
     profile_image = models.ImageField("프로필 이미지", upload_to="users/profile", blank=True)
     short_description = models.TextField("소개글", blank=True)
     is_active = models.BooleanField(default=True)
@@ -70,8 +70,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     
     # 포스트와 피드의 좋아요 필드
-    like_posts = models.ManyToManyField("posts.Post", verbose_name="좋아요한 포스트", related_name="like_post_users")
-    like_feeds = models.ManyToManyField("feeds.Feed", verbose_name="좋아요한 피드", related_name="like_feed_users")
+    # blank=True를 지정하지 않으면, 관리자 페이지에서 필수 입력 항목으로 지정되어 저장이 안된다.
+    like_posts = models.ManyToManyField("posts.Post", verbose_name="좋아요한 포스트", related_name="like_post_users", blank=True)
+    like_feeds = models.ManyToManyField("feeds.Feed", verbose_name="좋아요한 피드", related_name="like_feed_users", blank=True)
     
     following = models.ManyToManyField(
         'self',
