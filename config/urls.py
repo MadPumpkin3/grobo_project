@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from .views import Index, LoginStatus
+from .views import Index, LoginStatus, PageSwitching
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -25,6 +25,7 @@ urlpatterns = [
     path('', Index.as_view(), name='index'),
     # 웰컴 페이지(index)에 로그인 버튼 클릭시 login_statue 실행 후, 결과에 따라 페이지 이동
     path('login_status/', LoginStatus.as_view(), name='login_status'),
+    path('page_switching/', PageSwitching.as_view(), name='page_switching'),
     path('users/', include('myapps.users.users_urls')),
     path('posts/', include('myapps.posts.posts_urls')),
     path('feeds/', include('myapps.feeds.feeds_urls')),
@@ -36,3 +37,9 @@ urlpatterns += static(
     settings.MEDIA_URL, 
     document_root=settings.MEDIA_ROOT,
     )
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]

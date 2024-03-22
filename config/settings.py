@@ -24,9 +24,9 @@ TEMPLATES_DIR = BASE_DIR / "myapps/templates"
 SECRET_KEY = 'django-insecure-()7xt93075zpr$2lewb39648%p^mo-&xsf+!u932rf7sg!$zx)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -92,7 +92,7 @@ DATABASES = {
         'USER': 'grobo',
         'PASSWORD': 'Fpdjxpa37!',
         # 유동ip라서 주기적으로 수정 필요(나중에 고정 ip 삽입)
-        'HOST': '3.35.26.120',
+        'HOST': '3.34.99.222',
         'PORT': '3306',
         # mysql과 DBeaver 연결시 필수 사항 > 서버의 /etc/mysql/mysql.conf.d/mysqld.cnf 파일에서 port 활성화 및 port = 3306, 
         # bind-address = 0.0.0.0 으로 외부 ip에서도 접속 가능하도록 수정

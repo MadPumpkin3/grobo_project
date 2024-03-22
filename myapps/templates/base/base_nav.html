@@ -6,8 +6,15 @@
 {% block nav %}
     <a href="{% url 'ai_data:ai_data_main' %}">ATDC - C type</a>
     <a href="{% url 'posts:posts_main' %}">Grobo</a>
+    <form action="{% url 'page_switching' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Page Switching</button>
+    </form>
     <a href="{% url 'feeds:feeds_main' %}">Grobat</a>
-    <a href="{% url 'users:logout' %}">Logout</a>
+    <form action="{% url 'users:logout' %}" method="post">
+        {% csrf_token %}
+        <button type="summit">logout</button>
+    </form>
 {% endblock %}
 
 {% block content %}{% endblock %}
