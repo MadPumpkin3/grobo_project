@@ -26,24 +26,3 @@ class LoginStatus(generic.View):
                 return redirect('feeds:feeds_main')
         else:
             return redirect('users:login')
-        
-class PageSwitching(generic.View):
-    def post(self, request):
-        # 유저의 기본 메인 페이지 값 가져오기
-        user_main_page = request.user.default_main_page
-        # 현재 페이지의 주소 가져오기
-        app_name = resolve(request.path_info).app_names
-        # 가져온 현재 페이지 주소가 속한 app_name 가져오기
-        # app_name = current_url.app_names
-        
-        # 가져온 app_name에 따라 redirect 값을 지정
-        if app_name == 'posts':
-            return redirect('feeds:feeds_main')
-        elif app_name == 'feeds':
-            return redirect('posts:posts_main')
-        else:
-            # 중립 페이지의 경우, 유저의 기본 메인 페이지로 이동
-            if user_main_page == 0:
-                return redirect('posts:posts_main')
-            else:
-                return redirect('feeds:feeds_main')

@@ -6,8 +6,10 @@
 {% block nav %}
     <a href="{% url 'ai_data:ai_data_main' %}">ATDC - C type</a>
     <a href="{% url 'posts:posts_main' %}">Grobo</a>
-    <form action="{% url 'page_switching' %}" method="post">
+    <form action="{% url 'common:page_switching' %}" method="post">
         {% csrf_token %}
+        <!-- 히든 input에 id로 자바스크립트를 설정하여 이 설정을 통해 현재 페이지 값을 'current_url'이름으로 반환되도록 정의 -->
+        <input type="hidden" id="currentUrlInput" name="current_url"  value="">
         <button type="submit">Page Switching</button>
     </form>
     <a href="{% url 'feeds:feeds_main' %}">Grobat</a>
@@ -18,4 +20,11 @@
 {% endblock %}
 
 {% block content %}{% endblock %}
-{% block js %} {% endblock %}
+{% block js %}
+    <script>
+        // 현재 페이지 URL을 hidden input 필드에 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('currentUrlInput').value = window.location.pathname;
+        });
+    </script>
+{% endblock %}
