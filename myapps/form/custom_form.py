@@ -1,6 +1,9 @@
 from django import forms
 
 # 여러개의 파일을 받는 사용자 정의 필드
+
+# 미사용 (사유: 템플릿에 input의 multiple 속성으로 구현)
+
 class MultiFileField(forms.MultiValueField):
     def __init__(self, *args, **kwargs):
         fields = (

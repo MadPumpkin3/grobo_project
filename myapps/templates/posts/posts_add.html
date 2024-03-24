@@ -1,0 +1,91 @@
+{% extends 'base/base_nav.html' %}
+
+{% block content %}
+    <h1>Post 생성 페이지</h1>
+    <form id="posts_images_upload" action="{% url 'posts:posts_images_upload' %}" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        <input id="id_images_uplord" name="images_uplord" type="file" multiple><br>
+        <button type="submit">이미지 첨부</button>
+    </form>
+    <form id="posts_add" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        <!-- {{ form.as_p }} -->
+        <ul>
+            <li>
+                <label for="id_title">제목:</label>
+                {{ form.title }}  
+            </li>
+            <li>
+                <label for="id_context">내용:</label>
+                {{ form.context }}
+            </li>
+            <li>
+                <label for="id_tag">태그:</label>
+                {{ form.tag }}
+            </li>
+            <li>
+                <button type="submit">글 작성</button>
+            </li>
+        </ul>
+    </form>
+{% endblock %}
+{% block js %}
+<script>
+    // 이미지 첨부 폼과 글 작성 폼의 데이터를 모두 수집하여 서버로 전송하는 함수
+    function submitForms() {
+        // 이미지 첨부 폼과 글 작성 폼의 데이터를 수집
+        var imageData = new FormData(document.getElementById("posts_images_upload"));
+        var postData = new FormData(document.getElementById("posts_add"));
+
+        // 이미지 첨부 폼의 데이터를 글 작성 폼 데이터에 추가
+        // 본래 FormData는 키-값 형태의 객체이다.
+        // entries()를 사용하여 키-값 객체를 쉽게 꺼낼 수 있게 튜플로 만든다.
+        // postData.append(pair[0], pair[1]) : 각각 pair[0]에는 키 , pair[0] 값을 넣는다.
+        var i = 0;
+        for (var pair of imageData.entries()) {
+            // 이미지 파일의 이름을 고유하게 설정하여 FormData에 추가
+            postData.append('image' + i, pair[1]);
+            i += 2; // 키 값을 2씩 증가하여 고유한 키 생성
+        }
+
+        // 서버로 데이터를 전송(응답 데이터도 해당 주소와 연결된 뷰에서 반환하는 값이다.)
+        fetch("{% url 'posts:posts_images_upload' %}", {
+            method: "POST",
+            body: postData,
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+            }
+        })
+        // 위 서버로 데이터 전송 후, 서버에서 수신 응답을 확인하여 ok가 아니면 에러 메세지 생성
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            // 응답의 본문을 JSON형식으로 파싱하여 반환
+            return response.json();
+        })
+        // 위 .then에서 받은 데이터를 처리
+        .then(data => {
+            // 서버로부터 받은 데이터를 콘솔에 출력
+            console.log("서버 응답 데이터:", data);
+
+            // 서버로부터 받은 데이터를 폼 필드에 채워 넣음(data.field를 뷰에서 지정해주면 된다.) 
+            document.getElementById("id_title").value = data.form.title;
+            document.getElementById("id_context").value = data.form.context;
+            document.getElementById("id_tag").value = data.form.tag;
+            // 필요한 다른 폼 필드들에 대해 위와 같은 방식으로 데이터를 채워 넣음
+        })
+        // 'tetch'함수가 실패할 경우 발생한 오류를 처리하는 부분
+        .catch(error => {
+            console.error("There was a problem with your fetch operation:", error);
+        });
+    }
+
+    // 폼 제출 이벤트를 처리하여 submitForms 함수를 호출
+    document.getElementById("posts_images_upload").addEventListener("submit", function(event) {
+        event.preventDefault(); // 기본 제출 동작을 막음
+        submitForms(); // 폼 데이터를 서버로 전송
+    });
+</script>
+ 
+{% endblock %}
