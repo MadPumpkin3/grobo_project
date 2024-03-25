@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import resolve
 from .models import Post, PostComment
@@ -33,14 +33,19 @@ class PostImageUpload(generic.View):
     template_name = 'posts/posts_add.html'
     
     def post(self, request):
-        form = PostCreateForm(request.POST, request.FILES)
-        # form_data = request.POST
-        # file_data = request.FILES
-        
+        form_data = request.POST
+        file_data = request.FILES
         context = {
-            'form': form,
-            'title': '통신 잘됨',
+            'title': form_data.get('title'),
+            'context': form_data.get('context'),
+            'tag': form_data.get('tag'),
         }
         
-        return render(request, self.template_name, context)
+        # JsonResponse() : 주어진 데이터를 JSON형식으로 직렬화하고, 이를 HTTP 응답으롤 반환한다.
+        # 그러면 템플릿의 자바스크립트에서 JSON형식의 데이터를 받고, 이 데이터를 자바스크립트로 바꿔서 사용한다.
+        return JsonResponse(context)
+    
+        # (중요!!) django와 자바스크립트 간의 데이터 통신에서 JSON형식을 사용하는 것이 일반적이다.
+        # (중요!!) 자바스크립트 > django 데이터 전송 시 별다른 변환x
+        # (중요!!) django > 자바스크립트 데이터 전송 시 JSON형식으로 변환 > 자바스크립트에서 JSON형식의 데이터를 자바스크립트 데이터로 변환
         
