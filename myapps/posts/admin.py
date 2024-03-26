@@ -3,6 +3,9 @@ from .models import Post, PostComment, PostImage
 from django.db.models import ManyToManyField
 from django.forms import CheckboxSelectMultiple
 import admin_thumbnails
+from markdownx.admin import MarkdownxModelAdmin
+from markdownx.models import MarkdownxField
+from markdownx.widgets import AdminMarkdownxWidget
 
 # Register your models here.
 
@@ -17,8 +20,10 @@ class PostImageInline(admin.TabularInline):
     extra = 1
     verbose_name = "이미지 업로드"
 
+# class PostAdmin(admin.ModelAdmin):
+
 @admin.register(Post)
-class PostAdmin(admin.ModelAdmin):
+class PostAdmin(MarkdownxModelAdmin):
     list_display = ('id', 'user', 'title', 'created')
     list_filter = ('user', 'tag', 'created')
     search_fields = ('user', 'tag')
@@ -35,6 +40,7 @@ class PostAdmin(admin.ModelAdmin):
     # 필드에 옵션을 적용하려면 필드(tag필드)와 연결된 모델(hashtag)을 관리자 페이지에 등록해야 한다.
     formfield_overrides = {
         ManyToManyField: {"widget": CheckboxSelectMultiple},
+        MarkdownxField: {"widget": AdminMarkdownxWidget},
     }
  
 @admin.register(PostComment)    

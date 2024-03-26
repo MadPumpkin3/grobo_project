@@ -1,11 +1,12 @@
 from django.db import models
-
+from markdownx.models import MarkdownxField
 
 # Create your models here.
 class Post(models.Model):
     user = models.ForeignKey("users.User", verbose_name="작성자", on_delete=models.CASCADE)
     title = models.CharField("제목", max_length=255, blank=False, null=False)
-    context = models.TextField("내용", blank=True, null=True)
+    context = MarkdownxField()
+    # context = MarkdownxField("내용", blank=True, null=True)
     created = models.DateTimeField("생성일시", auto_now_add=True)
     
     tag = models.ManyToManyField("feeds.HashTag", verbose_name="태그명", related_name="tag_posts")

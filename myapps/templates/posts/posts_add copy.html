@@ -1,5 +1,4 @@
 {% extends 'base/base_nav.html' %}
-{% load posts_filters %}
 
 {% block content %}
     <h1>Post 생성 페이지</h1>
@@ -12,28 +11,24 @@
         {% csrf_token %}
         <!-- {{ form.as_p }} 
         <button type="submit">글 작성</button> -->
-        <div>
-            <label for="id_title">제목</label>
-            {{ form.title }}
-        </div>
-        <div>
-            <label for="id_context">내용</label>
-            {{ form.context }}
-        </div>
-        <div>
-            <label for="id_tag">태그</label>
-            {{ form.tag }}
-        </div>
-        <div>
-            <button type="submit" id="form_submit">글 작성</button>
-        </div>
+        <ul>
+            <li>
+                <label for="id_title">제목:</label>
+                <input type="text" id="id_title" name="title">
+            </li>
+            <li>
+                <label for="id_context">내용:</label>
+                <textarea id="id_context" name="context"></textarea>
+            </li>
+            <li>
+                <label for="id_tag">태그:</label>
+                <input type="text" id="id_tag" name="tag">
+            </li>
+            <li>
+                <button type="submit" id="form_submit">글 작성</button>
+            </li>
+        </ul>
     </form>
-    <div id="preview">
-        <span>테스트</span>
-        <div id="id_pr_title'"></div>
-        <span id="id_pr_context">{{ data.context|formatted_markdown }}</span>
-        <span id="id_pr_tag">{{ data.tag }}</span>
-    </div>
 {% endblock %}
 {% block js %}
 <script>
@@ -88,12 +83,6 @@
             document.getElementById('id_title').value = data.title;
             document.getElementById('id_context').value = data.context;
             document.getElementById('id_tag').value = data.tag;
-
-            // 해당 span 태그를 읽기 전용으로 만들기
-            document.getElementById('id_pr_title').innerHTML = data.title;
-            //document.getElementById('id_pr_title').textContent = data.title;
-            //document.getElementById('id_pr_context').textContent = data.context;
-            //document.getElementById('id_pr_tag').textContent = data.tag;
         })
         // 서버로 전송에 오류가 있을 경우, 오류 출력
         .catch(error => {

@@ -4,6 +4,7 @@ from django.urls import resolve
 from .models import Post, PostComment
 from django.views import generic
 from myapps.form.posts.post_form import PostCreateForm, PostCommentForm
+from django.core.cache import cache
 
 # Create your views here.
 
@@ -23,9 +24,11 @@ class PostAdd(generic.FormView):
     success_url = ''
     
     def form_valid(self, form):
+        print('입력 성공')
         return super().form_valid(form)
     
     def form_invalid(self, form):
+        print('오류 발생')
         return super().form_invalid(form)
     
 # 포스트에 이미지를 넣고 반환하는 클래스
@@ -33,11 +36,20 @@ class PostImageUpload(generic.View):
     template_name = 'posts/posts_add.html'
     
     def post(self, request):
+        # request.POST는 데이터가 딕셔너리 형태인 'field_name_1': 'value_1' 으로 저장되어 있다.
         form_data = request.POST
+        # request.FILES는 이미지가 딕셔너리 형태인 'file_field_name_1': <UploadedFile object> 으로 저장되어 있다.
         file_data = request.FILES
+        
+        context_data = form_data.get('context')
+        
+        # for image in file_data:
+        #     cache.set(image[0], image[1], timeout=86400)
+        #     context_data = f'<br> {image[1]}'
+        
         context = {
             'title': form_data.get('title'),
-            'context': form_data.get('context'),
+            'context': context_data,
             'tag': form_data.get('tag'),
         }
         

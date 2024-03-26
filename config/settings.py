@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     # Third party apps
     'django_extensions',
     'django_apscheduler',
+    # 모델, 폼, 템플릿에서 markdown을 사용하기 위해 설정
+    'markdownx',
     
     # Django apps
     'django.contrib.admin',
@@ -93,7 +95,7 @@ DATABASES = {
         'USER': 'grobo',
         'PASSWORD': 'Fpdjxpa37!',
         # 유동ip라서 주기적으로 수정 필요(나중에 고정 ip 삽입)
-        'HOST': '54.180.118.160',
+        'HOST': '43.200.183.46',
         'PORT': '3306',
         # mysql과 DBeaver 연결시 필수 사항 > 서버의 /etc/mysql/mysql.conf.d/mysqld.cnf 파일에서 port 활성화 및 port = 3306, 
         # bind-address = 0.0.0.0 으로 외부 ip에서도 접속 가능하도록 수정
