@@ -1,11 +1,11 @@
 from django.contrib import admin
-from .models import Post, PostComment, PostImage
 from django.db.models import ManyToManyField
 from django.forms import CheckboxSelectMultiple
-import admin_thumbnails
 from markdownx.admin import MarkdownxModelAdmin
 from markdownx.models import MarkdownxField
 from markdownx.widgets import AdminMarkdownxWidget
+from .models import Post, PostComment, PostImage, PreviewPost, PreviewImage
+import admin_thumbnails
 
 # Register your models here.
 
@@ -19,6 +19,12 @@ class PostImageInline(admin.TabularInline):
     model = PostImage
     extra = 1
     verbose_name = "이미지 업로드"
+    
+@admin_thumbnails.thumbnail("image_url")
+class PreviewImageInline(admin.TabularInline):
+    model = PreviewImage
+    extra = 1
+    verbose_name = "미리보기 이미지 업로드"
 
 # class PostAdmin(admin.ModelAdmin):
 
@@ -29,7 +35,7 @@ class PostAdmin(MarkdownxModelAdmin):
     search_fields = ('user', 'tag')
     fieldsets = [
         (None, {'fields': ('user',)}), # 기본적으로 레코드 생성 form에는 id 필드가 없다.(id는 자동 생성되기 때문에 지정할 필요가 없어서)
-        ('주요내용', {'fields': ('title', 'context')}),
+        ('주요내용', {'fields': ('title', 'content')}),
         ('추가내용', {'fields': ('tag',)}),
     ]
     
@@ -46,3 +52,19 @@ class PostAdmin(MarkdownxModelAdmin):
 @admin.register(PostComment)    
 class PostCommentAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'post', 'created')
+    
+@admin.register(PreviewPost)
+class PreviewPostAdmin(MarkdownxModelAdmin):
+    list_display = ('id', 'user', 'title', 'created')
+    fieldsets = [
+        (None, {'fields': ('user',)}), # 기본적으로 레코드 생성 form에는 id 필드가 없다.(id는 자동 생성되기 때문에 지정할 필요가 없어서)
+        ('주요내용', {'fields': ('title', 'content')}),
+        ('추가내용', {'fields': ('tag',)}),
+    ]
+    
+    inlines = [PreviewImageInline]
+    
+    formfield_overrides = {
+        MarkdownxField: {'widget': AdminMarkdownxWidget},
+    }
+    

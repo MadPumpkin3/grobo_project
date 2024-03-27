@@ -13,8 +13,8 @@ class PostCreateForm(forms.Form):
     title = forms.CharField(
         label='제목', max_length=255, required=True, widget=forms.TextInput(attrs={"placeholder": "제목을 입력하세요.", "id": "id_title"})
     )
-    context = MarkdownxFormField(
-        label='내용', required=True, widget=MarkdownxWidget(attrs={"placeholder": "내용을 입력하세요.", "id": "id_context"})
+    content = MarkdownxFormField(
+        label='내용', required=True, widget=MarkdownxWidget(attrs={"placeholder": "내용을 입력하세요.", "id": "id_content"})
     )
     tag = forms.CharField(
         label='태그', widget=forms.TextInput(attrs={"placeholder": "#으로 태그를 구분해서 입력하세요.", "id": "id_tag"})
