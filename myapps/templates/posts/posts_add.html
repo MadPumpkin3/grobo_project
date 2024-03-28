@@ -2,59 +2,149 @@
 {% load posts_filters %}
 
 {% block css %}
+    <!-- 웹 페이지에 jQuery 라이브러리를 추가하는 HTML 스크립트 태그 -->
+    <!-- URL은 Google의 *CDN(Content Delivery Network)을 통해 호스팅되는 *jQuery 라이브러리의 경로를 가리킵니다. -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 {% endblock %}
 
 {% block content %}
     <h1>Post 생성 페이지</h1>
+    <!-- 아래 마크다운 데이터 폼에 이미지 주소를 첨부하는 form 태그 -->
     <form id="posts_images_upload" enctype="multipart/form-data" method="post">
         {% csrf_token %}
         <input id="id_images_upload" name="images_upload" type="file" multiple><br>
         <button type="submit" id="image_submit">이미지 첨부</button>
     </form>
-    <form id="markdown_form" method="post">
+    <!-- 마크다운 텍스트 필드가 보여지는 부분 -->
+    <form id="markdown_form" enctype="multipart/form-data" method="post">
         {% csrf_token %}
-        <textarea id="markdown_text" name="markdown_text" rows="10" cols="50"></textarea>
-        <button type="submit">Submit</button>
         <!-- {{ form.as_p }} 
         <button type="submit">글 작성</button> -->
-        <!-- <div>
-            <label for="id_title">제목</label>
+        <div>
+            {{ form.title.label }}
             {{ form.title }}
         </div>
         <div>
-            <label for="id_content">내용</label>
+            {{ form.content.label }}
+            <!-- <textarea id="markdown_text" name="markdown_text" rows="10" cols="50"></textarea> -->
             {{ form.content }}
         </div>
         <div>
-            <label for="id_tag">태그</label>
+            {{ from.tag.label }}
             {{ form.tag }}
         </div>
         <div>
             <button type="submit" id="form_submit">글 작성</button>
-        </div> -->
+        </div>
     </form>
-    <div id="html_preview" class="html-preview">
-        
+    <!-- 미리보기가 보여지는 부분 -->
+    <div class="preview">
+        <h1>미리보기</h1>
+        <label for="title_preview">제목</label>
+        <p id="title_preview" class="title-preview"></p>
+        <label for="content_preview">내용</label>
+        <p id="content_preview" class="content-preview"></p>
+        <label for="tag_preview">태그</label>
+        <p id="tag_preview" class="tag-preview"></p>
     </div>
 {% endblock %}
 {% block js %}
+<!-- 미리보기 기능을 구현하는 기능 -->
 <script>
     $(document).ready(function(){
-        $('#markdown_text').on('input', function(){
-            var markdown_text = $(this).val();
+        // id 명을 여러개 지정해야 할 경우 하나의 ''안에 여러 개의 id명 기입
+        $('#id_title, #markdown_text, #id_tag').on('input', function(){
+            var title = $('#id_title').val();
+            // 위 $('#di명').on('input', function(){})에서 id명이 여러 개일 경우, 마크다운 택스트를 직접 지정
+            var markdown_text = $('#markdown_text').val();
+            // 위 $('#di명').on('input', function(){})에서 id명이 한 개일 경우, $(this)로 하나만 있는 id명을 가져옴
+            // var markdown_text = $(this).val();
+            var tag = $('#id_tag').val();
             $.ajax({
                 url: '{% url "posts:posts_preview" %}',
                 type: 'POST',
                 data: {
+                    'title': title,
                     'markdown_text': markdown_text,
+                    'tag': tag,
                     'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
                 },
                 success: function(response){
-                    $('#html_preview').html(response.html_preview);
+                    $('#title_preview').text(response.title);
+                    $('#content_preview').html(response.html_preview);
+                    $('#tag_preview').text(response.tag);
                 }
             });
         });
     });
-    </script>
+</script>
+<!-- 이미지 첨부 시, 마크다운 텍스트에 자동 입력과 미리보기에 반영되도록 작업 -->
+<script>
+    // 페이지가 모두 로드되면 해당 이벤트 실행 준비
+    document.addEventListener('DOMContentLoaded', function () {
+        // 'image_submit'을 id로 하는 버튼을 '클릭'시, 이벤트(작업) 실행
+        document.getElementById('image_submit').addEventListener('click', function (event) {
+            event.preventDefault();
+            // 'posts_images_upload'를 id로 하는 폼에서 생성된 폼 데이터를 저장
+            var imageData = new FormData(document.getElementById('posts_images_upload'));
+            // 'posts_add'를 id로 하는 폼의 폼 필드를 저장
+            var formData = new FormData(document.getElementById('posts_add'))
+            // 각 폼의 필드에 맞는 데이터 저장
+            formData.append('title', formData.get('title'));
+            formData.append('content', formData.get('content'));
+            formData.append('tag', formData.get('tag'));
+
+            // 이미지 첨부 폼의 데이터를 글 작성 폼 데이터에 추가
+            // 본래 FormData는 키-값 형태의 객체이다.
+            // entries()를 사용하여 키-값 객체를 쉽게 꺼낼 수 있게 튜플로 만든다.
+            // postData.append(pair[0], pair[1]) : 각각 pair[0]에는 키 , pair[0] 값을 넣는다.
+            var i = 0;
+            for (var pair of imageData.entries()) {
+                // 이미지 파일의 이름을 고유하게 설정하여 FormData에 추가
+                formData.append('image' + i, pair[1]);
+                i += 2; // 키 값을 2씩 증가하여 고유한 키 생성
+            }
+
+            // 결합된 데이터들을 서버에 보내주는 함수 실행
+            sendDataToServer(formData);
+        });
+    });
+    
+    // 받은 데이터를 서버에 보내주는 함수
+    function sendDataToServer(formData) {
+        fetch("{% url 'posts:posts_images_upload' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': "{{ csrf_token }}" // CSRF 토큰을 설정해야 합니다.
+            }
+        })
+        // fetch에서 반환된 응답 처리
+        // HTTP 응답(response)의 내용을 JSON 형식으로 파싱한다.
+        // json() : JSON형식의 문자열을 JavaScript객체로 파싱한다.
+        // 즉, 서버로부터 받은 JSON 데이터를 JavaScript 객체로 변환하여 다음 Promise로 전달한다.
+        .then(response => response.json())
+
+        // response.json()로 파싱된 자바스크립트 객체를 data 변수에 '자동'으로 할당하여 해당 변수로 호출할 수 있게한다.
+        .then(data => {
+            // 해당 id를 가지고 있는 폼 필드에 해당 데이터 입력
+            document.getElementById('id_title').value = data.title;
+            document.getElementById('id_content').value = data.content;
+            document.getElementById('id_tag').value = data.tag;
+
+            var htmlContent = marked(data.content);
+
+            // 해당 span 태그를 읽기 전용으로 만들기
+            // 중요!! = id를 지정할 때 '' 이 부분도 똑같이 해야한다. ''와 ""를 구분하다.
+            document.getElementById('id_pr_title').textContent = data.title;
+            document.getElementById('id_pr_content').innerHTML = htmlContent;
+            //document.getElementById('id_pr_context').textContent = data.context;
+            document.getElementById('id_pr_tag').textContent = data.tag;
+        })
+        // 서버로 전송에 오류가 있을 경우, 오류 출력
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+</script>
 {% endblock %}

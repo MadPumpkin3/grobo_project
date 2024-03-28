@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.urls import resolve
 from .models import Post, PostComment
 from django.views import generic, View
-from myapps.form.posts.post_form import PostCreateForm, PostCommentForm
+from myapps.form.posts.post_form import PostCustomEditorForm, PostCommentForm
 from django.core.cache import cache
 from markdownx.utils import markdownify
 
@@ -20,21 +20,29 @@ class PortalMainAPI(generic.ListView):
         return context
 
 # 포스트 생성 페이지에 마크다운 필드를 보여주는 뷰
-class MarkdownEditorView(View):
-    def get(self, request):
-        return render(request, 'posts/posts_add.html')
+class MarkdownEditorView(generic.FormView):
+    form_class = PostCustomEditorForm
+    template_name = 'posts/posts_add.html'
+    # def get(self, request):
+    #     return render(request, 'posts/posts_add.html')
 
 # 포스트 생성 페이지 뷰
-class PostPreview(generic.FormView):
+class PostPreview(View):
     def post(self, request):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            title = request.POST.get('title', '')
             markdown_text = request.POST.get('markdown_text', '')
+            tag = request.POST.get('tag', '')
             html_preview = markdownify(markdown_text)
-            return JsonResponse({'html_preview': html_preview})
+            return JsonResponse({
+                'title': title,
+                'html_preview': html_preview,
+                'tag': tag,
+                })
         return JsonResponse({}, status=400)
     
 # 포스트 생성 페이지에 이미지를 첨부시 반환하는 뷰
-class PostImageUpload(generic.View):
+class PostImageUpload(View):
     template_name = 'posts/posts_add.html'
     
     def post(self, request):

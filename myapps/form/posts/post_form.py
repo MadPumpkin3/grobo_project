@@ -9,12 +9,12 @@ from markdownx.widgets import MarkdownxWidget
 # view에서 폼 생성시, 'PostCreateForm'를 먼저 호출하고, 그 뒤에 'PostImageFormset'를 호출해서 'form=PostImageForm'연결시키기
 
 # 포스트 생성 폼
-class PostCreateForm(forms.Form):
+class PostCustomEditorForm(forms.Form):
     title = forms.CharField(
         label='제목', max_length=255, required=True, widget=forms.TextInput(attrs={"placeholder": "제목을 입력하세요.", "id": "id_title"})
     )
     content = MarkdownxFormField(
-        label='내용', required=True, widget=MarkdownxWidget(attrs={"placeholder": "내용을 입력하세요.", "id": "id_content"})
+        label='내용', required=True, widget=MarkdownxWidget(attrs={"placeholder": "내용을 입력하세요.", "id": "markdown_text"})
     )
     tag = forms.CharField(
         label='태그', widget=forms.TextInput(attrs={"placeholder": "#으로 태그를 구분해서 입력하세요.", "id": "id_tag"})

@@ -3,6 +3,10 @@
 <html lang="ko">
 <head>
     <meta charset="utf-8" />
+    <!-- 모바일 기기에서 웹 페이지를 렌더링할 때 사용되는 뷰포트 설정 -->
+    <!-- width=device-width: 뷰포트의 너비를 장치의 화면 너비에 맞춥니다. 이렇게 함으로써 모바일 기기에서 웹 페이지가 뷰포트의 크기에 맞게 확대 또는 축소되지 않고 정확히 화면 너비에 맞춰 표시됩니다 -->
+    <!-- initial-scale=1.0: 페이지가 처음 로드될 때 초기 확대 비율을 1로 설정합니다. 이는 웹 페이지가 처음 로드될 때 사용자가 줌 인 또는 줌 아웃을 하지 않고도 정상적으로 표시되도록 합니다. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% block css %}{% endblock %}
     <title>Grobo</title>
 </head>
