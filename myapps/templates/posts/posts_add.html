@@ -10,13 +10,13 @@
 {% block content %}
     <h1>Post 생성 페이지</h1>
     <!-- 아래 마크다운 데이터 폼에 이미지 주소를 첨부하는 form 태그 -->
-    <form id="posts_images_upload" enctype="multipart/form-data" method="post">
+    <form id="post_images_upload_form" enctype="multipart/form-data" method="post">
         {% csrf_token %}
-        <input id="id_images_upload" name="images_upload" type="file" multiple><br>
-        <button type="submit" id="image_submit">이미지 첨부</button>
+        <input id="post_images_upload_field" name="post_images_upload_field" type="file" multiple><br>
+        <button type="submit" id="post_images_upload_submit">이미지 첨부</button>
     </form>
     <!-- 마크다운 텍스트 필드가 보여지는 부분 -->
-    <form id="markdown_form" enctype="multipart/form-data" method="post">
+    <form id="post_markdown_form" enctype="multipart/form-data" method="post">
         {% csrf_token %}
         <!-- {{ form.as_p }} 
         <button type="submit">글 작성</button> -->
@@ -38,14 +38,14 @@
         </div>
     </form>
     <!-- 미리보기가 보여지는 부분 -->
-    <div class="preview">
+    <div class="post_preview">
         <h1>미리보기</h1>
-        <label for="title_preview">제목</label>
-        <p id="title_preview" class="title-preview"></p>
-        <label for="content_preview">내용</label>
-        <p id="content_preview" class="content-preview"></p>
-        <label for="tag_preview">태그</label>
-        <p id="tag_preview" class="tag-preview"></p>
+        <label for="post_title_preview">제목</label>
+        <p id="post_title_preview" class="post-title-preview"></p>
+        <label for="post_content_preview">내용</label>
+        <p id="post_content_preview" class="post-content-preview"></p>
+        <label for="post_tag_preview">태그</label>
+        <p id="post_tag_preview" class="post-tag-preview"></p>
     </div>
 {% endblock %}
 {% block js %}
@@ -53,13 +53,13 @@
 <script>
     $(document).ready(function(){
         // id 명을 여러개 지정해야 할 경우 하나의 ''안에 여러 개의 id명 기입
-        $('#id_title, #markdown_text, #id_tag').on('input', function(){
-            var title = $('#id_title').val();
+        $('#post_title_id, #post_markdown_id, #post_tag_id').on('input', function(){
+            var title = $('#post_title_id').val();
             // 위 $('#di명').on('input', function(){})에서 id명이 여러 개일 경우, 마크다운 택스트를 직접 지정
-            var markdown_text = $('#markdown_text').val();
+            var markdown_text = $('#post_markdown_id').val();
             // 위 $('#di명').on('input', function(){})에서 id명이 한 개일 경우, $(this)로 하나만 있는 id명을 가져옴
             // var markdown_text = $(this).val();
-            var tag = $('#id_tag').val();
+            var tag = $('#post_tag_id').val();
             $.ajax({
                 url: '{% url "posts:posts_preview" %}',
                 type: 'POST',
@@ -70,9 +70,9 @@
                     'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
                 },
                 success: function(response){
-                    $('#title_preview').text(response.title);
-                    $('#content_preview').html(response.html_preview);
-                    $('#tag_preview').text(response.tag);
+                    $('#post_title_preview').text(response.title);
+                    $('#post_content_preview').html(response.html_preview);
+                    $('#post_tag_preview').text(response.tag);
                 }
             });
         });
@@ -81,70 +81,55 @@
 <!-- 이미지 첨부 시, 마크다운 텍스트에 자동 입력과 미리보기에 반영되도록 작업 -->
 <script>
     // 페이지가 모두 로드되면 해당 이벤트 실행 준비
-    document.addEventListener('DOMContentLoaded', function () {
-        // 'image_submit'을 id로 하는 버튼을 '클릭'시, 이벤트(작업) 실행
-        document.getElementById('image_submit').addEventListener('click', function (event) {
-            event.preventDefault();
-            // 'posts_images_upload'를 id로 하는 폼에서 생성된 폼 데이터를 저장
-            var imageData = new FormData(document.getElementById('posts_images_upload'));
-            // 'posts_add'를 id로 하는 폼의 폼 필드를 저장
-            var formData = new FormData(document.getElementById('posts_add'))
-            // 각 폼의 필드에 맞는 데이터 저장
-            formData.append('title', formData.get('title'));
-            formData.append('content', formData.get('content'));
-            formData.append('tag', formData.get('tag'));
+    $(document).ready(function(){
+        $('#post_images_upload_form').on('submit', function(event){
+            // 위 'submit' 이벤트를 가지고 있는 버튼을 클릭하면 원래는 자동으로 연결된 뷰에 폼 데이터가 제출된다.
+            // 폼 데이터 자동 제출을 막기 위해 아래 코드를 설정한다.
+            event.preventDefault(); // 기본 폼 제출 동작을 중단
 
-            // 이미지 첨부 폼의 데이터를 글 작성 폼 데이터에 추가
-            // 본래 FormData는 키-값 형태의 객체이다.
-            // entries()를 사용하여 키-값 객체를 쉽게 꺼낼 수 있게 튜플로 만든다.
-            // postData.append(pair[0], pair[1]) : 각각 pair[0]에는 키 , pair[0] 값을 넣는다.
-            var i = 0;
-            for (var pair of imageData.entries()) {
-                // 이미지 파일의 이름을 고유하게 설정하여 FormData에 추가
-                formData.append('image' + i, pair[1]);
-                i += 2; // 키 값을 2씩 증가하여 고유한 키 생성
+            // FormData객체: HTML 폼 데이터를 간편하게 수집하고 서버로 전송하기 위한 객체(키-값 형식)
+            var image_data = new FormData();
+            // $('id명')[0]: 동일한 id를 가지는 요소가 여러개일 때, 인덱스 방식으로 각 요소에 접근할 수 있다.(해당 id의 요소가 1개일 경우 [0]을 생략해도 된다.)
+            // .files : 지정된 파일 필드 요소의 'FileList'를 가져오는 메소드
+            var images = $('#post_images_upload_field')[0].files;
+            // 중요! .files메소드로 가져온 'FileList'에는 각 파일의 데이터(속성포함)가 '인덱스' 순서로 들어있고, 각 인덱스에서는 키-값 형태로 파일 속성에 접근할 수 있다.
+            // 예) FileList[0] = A파일, FileList[1] = B파일 / FileList[0].이름 = A파일의 이름
+            // 추가 - FileList[인덱스]에는 각 파일의 데이터가 '그대로' 들어가있다.
+
+            // 'length' 속성: FileList(images) 객체에 포함된 파일의 수를 구하는 속성
+            // 'i++' : 반복문이 한 번 실행될 때마다 'i'의 값을 1씩 증가시키는 것을 나타냄
+            // 예) images에 있는 파일의 수가 5개일 경우, images.length의 값은 5가 되고 images에 있는 파일의 인덱스는 images[0]~[4]까지이기 때문에 i가 images.length와 같아도 문제없이 images에서 파일 데이터를 가져올 수 있음.
+            for(var i = 0; i < images.length; i++) {
+                image_data.append('post_image' + i, images[i])
             }
 
-            // 결합된 데이터들을 서버에 보내주는 함수 실행
-            sendDataToServer(formData);
+            var markdown_text = $('#post_markdown_id').val();
+            //var image_data = new FormData();
+            //var images = $('#post_images_upload_field')[0].files;
+            
+            //var i = 0;
+            //for(var image of images.entries()){
+                //image_data.append('post_image' + i, image[1]);
+                //i += 2;
+            //}
+
+            $.ajax({
+                url: "{% url 'posts:posts_images_upload' %}",
+                type: "POST",
+                data: {
+                    "markdown_text": markdown_text,
+                    "image_data": image_data,
+                    "csrfmiddlewaretoken": $('input[name=csrfmiddlewaretoken]').val()
+                },
+                processData: false,
+                contentType: false,
+
+                success: function(response){
+                    $('#post_markdown_id').text(response.markdown_text);
+                    $('#post_content_preview').html(response.makrdown_html);
+                }
+            });
         });
     });
-    
-    // 받은 데이터를 서버에 보내주는 함수
-    function sendDataToServer(formData) {
-        fetch("{% url 'posts:posts_images_upload' %}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': "{{ csrf_token }}" // CSRF 토큰을 설정해야 합니다.
-            }
-        })
-        // fetch에서 반환된 응답 처리
-        // HTTP 응답(response)의 내용을 JSON 형식으로 파싱한다.
-        // json() : JSON형식의 문자열을 JavaScript객체로 파싱한다.
-        // 즉, 서버로부터 받은 JSON 데이터를 JavaScript 객체로 변환하여 다음 Promise로 전달한다.
-        .then(response => response.json())
-
-        // response.json()로 파싱된 자바스크립트 객체를 data 변수에 '자동'으로 할당하여 해당 변수로 호출할 수 있게한다.
-        .then(data => {
-            // 해당 id를 가지고 있는 폼 필드에 해당 데이터 입력
-            document.getElementById('id_title').value = data.title;
-            document.getElementById('id_content').value = data.content;
-            document.getElementById('id_tag').value = data.tag;
-
-            var htmlContent = marked(data.content);
-
-            // 해당 span 태그를 읽기 전용으로 만들기
-            // 중요!! = id를 지정할 때 '' 이 부분도 똑같이 해야한다. ''와 ""를 구분하다.
-            document.getElementById('id_pr_title').textContent = data.title;
-            document.getElementById('id_pr_content').innerHTML = htmlContent;
-            //document.getElementById('id_pr_context').textContent = data.context;
-            document.getElementById('id_pr_tag').textContent = data.tag;
-        })
-        // 서버로 전송에 오류가 있을 경우, 오류 출력
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }
 </script>
 {% endblock %}

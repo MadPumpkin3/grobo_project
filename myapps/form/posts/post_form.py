@@ -11,13 +11,13 @@ from markdownx.widgets import MarkdownxWidget
 # 포스트 생성 폼
 class PostCustomEditorForm(forms.Form):
     title = forms.CharField(
-        label='제목', max_length=255, required=True, widget=forms.TextInput(attrs={"placeholder": "제목을 입력하세요.", "id": "id_title"})
+        label='제목', max_length=255, required=True, widget=forms.TextInput(attrs={"placeholder": "제목을 입력하세요.", "id": "post_title_id"})
     )
     content = MarkdownxFormField(
-        label='내용', required=True, widget=MarkdownxWidget(attrs={"placeholder": "내용을 입력하세요.", "id": "markdown_text"})
+        label='내용', required=True, widget=MarkdownxWidget(attrs={"placeholder": "내용을 입력하세요.", "id": "post_markdown_id"})
     )
     tag = forms.CharField(
-        label='태그', widget=forms.TextInput(attrs={"placeholder": "#으로 태그를 구분해서 입력하세요.", "id": "id_tag"})
+        label='태그', widget=forms.TextInput(attrs={"placeholder": "#으로 태그를 구분해서 입력하세요.", "id": "post_tag_id"})
     )
     
     # '#'으로 받은 '태그'데이터들을 각 객체로 분리하는 과정
