@@ -1,0 +1,153 @@
+{% extends 'base/base_nav.html' %}
+{% load posts_filters %}
+
+{% block css %}
+    <!-- 웹 페이지에 jQuery 라이브러리를 추가하는 HTML 스크립트 태그 -->
+    <!-- URL은 Google의 *CDN(Content Delivery Network)을 통해 호스팅되는 *jQuery 라이브러리의 경로를 가리킵니다. -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <h1>Post 생성 페이지</h1>
+    <!-- 아래 마크다운 데이터 폼에 이미지 주소를 첨부하는 form 태그 -->
+    <form id="post_images_upload_form" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        <input id="post_images_upload_field" name="post_images_upload_field" type="file" multiple><br>
+        <button type="button" id="post_images_upload_button">이미지 첨부</button>
+    </form>
+    <!-- 마크다운 텍스트 필드가 보여지는 부분 -->
+    <form id="post_markdown_form" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        <!-- {{ form.as_p }} 
+        <button type="submit">글 작성</button> -->
+        <div>
+            {{ form.title.label }}
+            {{ form.title }}
+        </div>
+        <div>
+            {{ form.content.label }}
+            <!-- <textarea id="markdown_text" name="markdown_text" rows="10" cols="50"></textarea> -->
+            {{ form.content }}
+        </div>
+        <div>
+            {{ from.tag.label }}
+            {{ form.tag }}
+        </div>
+        <div>
+            <button type="submit" id="form_submit">글 작성</button>
+        </div>
+    </form>
+    <!-- 미리보기가 보여지는 부분 -->
+    <div class="post_preview">
+        <h1>미리보기</h1>
+        <label for="post_title_preview">제목</label>
+        <p id="post_title_preview" class="post-title-preview"></p>
+        <label for="post_content_preview">내용</label>
+        <p id="post_content_preview" class="post-content-preview"></p>
+        <label for="post_tag_preview">태그</label>
+        <p id="post_tag_preview" class="post-tag-preview"></p>
+    </div>
+{% endblock %}
+{% block js %}
+<!-- 미리보기 기능을 구현하는 기능 -->
+<script>
+    $(document).ready(function(){
+        // id 명을 여러개 지정해야 할 경우 하나의 ''안에 여러 개의 id명 기입
+        $('#post_title_id, #post_markdown_id, #post_tag_id').on('input', function(){
+            var title = $('#post_title_id').val();
+            // 위 $('#di명').on('input', function(){})에서 id명이 여러 개일 경우, 마크다운 택스트를 직접 지정
+            var markdown_text = $('#post_markdown_id').val();
+            // 위 $('#di명').on('input', function(){})에서 id명이 한 개일 경우, $(this)로 하나만 있는 id명을 가져옴
+            // var markdown_text = $(this).val();
+            var tag = $('#post_tag_id').val();
+            $.ajax({
+                url: '{% url "posts:posts_preview" %}',
+                type: 'POST',
+                // 헤드에 CSRF 토큰을 넣어 보내는 방식으로 사용하면 오류가 생김.(사용 보류)
+                //headers: {
+                    //'X-CSRFToken': $('input[name=csrfmiddlewaretoken]').val()
+                //},
+                data: {
+                    'title': title,
+                    'markdown_text': markdown_text,
+                    'tag': tag,
+                    // 'input[name=csrfmiddlewaretoken]': POST 폼에는 CSRF_token이 hidden 속성으로 input 필드를 만들어서 요청을 보낼때 같이보낸다.
+                    // 'input[name=csrfmiddlewaretoken]': 해당 input 필드의 name 속성은 'csrfmiddlewaretoken'를 가지고 있다.
+                    // 그래서 아래 코드는 name 속성이 'csrfmiddlewaretoken'인 input 필드 즉, csrftoken 필드를 선택하고 해당 필드의 값을 가져오는 코드이다.
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                },
+                success: function(response){
+                    $('#post_title_preview').text(response.title);
+                    $('#post_content_preview').html(response.html_preview);
+                    $('#post_tag_preview').text(response.tag);
+                }
+            });
+        });
+    });
+</script>
+<!-- 이미지 첨부 시, 마크다운 텍스트에 자동 입력과 미리보기에 반영되도록 작업 -->
+<script>
+    // 페이지가 모두 로드되면 해당 이벤트 실행 준비
+    $(document).ready(function(){
+        $('#post_images_upload_button').on('click', function(){
+            // 위 'submit' 이벤트를 가지고 있는 버튼을 클릭하면 원래는 자동으로 연결된 뷰에 폼 데이터가 제출된다.
+            // 폼 데이터 자동 제출을 막기 위해 아래 코드를 설정한다.
+            // event.preventDefault(); // 기본 폼 제출 동작을 중단
+
+            // FormData객체: HTML 폼 데이터를 간편하게 수집하고 서버로 전송하기 위한 객체(키-값 형식)
+            var image_data = new FormData($('#post_images_upload_form'[0]));
+            var form_data = new FormData($('#post_markdown_form')[0]);
+            //var from_data = $('#post_markdown_id').val();
+
+            image_data.append($('#post_images_upload_form [name=csrfmiddlewaretoken]').val());
+            form_data.append($('#post_markdown_form [name=csrfmiddlewaretoken]').val());
+
+            // $('id명')[0]: 동일한 id를 가지는 요소가 여러개일 때, 인덱스 방식으로 각 요소에 접근할 수 있다.(해당 id의 요소가 1개일 경우 [0]을 생략해도 된다.)
+            // .files : 지정된 파일 필드 요소의 'FileList'를 가져오는 메소드
+            // * var images = $('#post_images_upload_field')[0].files;
+            // 중요! .files메소드로 가져온 'FileList'에는 각 파일의 데이터(속성포함)가 '인덱스' 순서로 들어있고, 각 인덱스에서는 키-값 형태로 파일 속성에 접근할 수 있다.
+            // 예) FileList[0] = A파일, FileList[1] = B파일 / FileList[0].이름 = A파일의 이름
+            // 추가 - FileList[인덱스]에는 각 파일의 데이터가 '그대로' 들어가있다.
+
+            // 'length' 속성: FileList(images) 객체에 포함된 파일의 수를 구하는 속성
+            // 'i++' : 반복문이 한 번 실행될 때마다 'i'의 값을 1씩 증가시키는 것을 나타냄
+            // 예) images에 있는 파일의 수가 5개일 경우, images.length의 값은 5가 되고 images에 있는 파일의 인덱스는 images[0]~[4]까지이기 때문에 i가 images.length와 같아도 문제없이 images에서 파일 데이터를 가져올 수 있음.
+            // * for(var i = 0; i < images.length; i++) {
+                // image_data.append('post_image' + i, images[i])
+            // }
+
+            // 2개의 폼에 있는 필드 데이터를 보내기 위해 필수적으로 필요한 csrftoken 값을 각 폼에서 가져오는 코드
+            // var csrf_token_images_upload = $('#post_images_upload_form [name=csrfmiddlewaretoken]').val();
+            // var csrf_token_markdown_form = $('#post_markdown_form [name=csrfmiddlewaretoken]').val();
+
+            $.ajax({
+                url: '{% url "posts:posts_images_upload" %}',
+                type: 'POST',
+                // headers: { 
+                    // 2개의 폼에서 데이터를 가져오기 때문에, 각 폼의 csrftoken 값을 가져와야 한다.
+                    // 'X-CSRFToken': csrf_token_images_upload + ';' + csrf_token_markdown_form
+                    //'X-CSRFToken': csrf_token_images_upload,
+                    //'X-CSRFToken': csrf_token_markdown_form
+                // },
+                data: {
+                    'form_data':form_data,
+                    'image_data': image_data
+                    // 'csrfmiddlewaretoken': csrf_token_images_upload,
+                    // 'csrfmiddlewaretoken': csrf_token_markdown_form
+                },
+                processData: false,
+                contentType: false,
+
+                success: function(response){
+                    $('#post_markdown_id').text(response.markdown_text);
+                    $('#post_content_preview').html(response.makrdown_html);
+                },
+                error: function(xhr, status, error) {
+                    console.error(xhr.responseText)
+                    alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

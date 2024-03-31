@@ -39,9 +39,6 @@ class PreviewPost(models.Model):
     content = MarkdownxField('내용', blank=True, null=True)
     tag = models.CharField('태그', max_length=255, blank=True, null=True)
     created = models.DateTimeField('생성일시', auto_now_add=True)
-    
-    def __str__(self):
-        return self.title
 
 # 포스트 미리보기용 이미지 데이터 테이블(임시 보관용 테이블)
 class PreviewImage(models.Model):
