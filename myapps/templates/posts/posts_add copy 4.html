@@ -58,24 +58,7 @@
     // 모든 데이터 제거 코드: sessionStorage.clear();
 </script>
 <script>
-    // 전역 변수로 이벤트 활성화 여부를 저장할 변수 선언
-    var eventsEnabled = true;
-
-    // 페이지가 모두 로드되면 해당 이벤트 실행 준비
-    $(document).ready(function(){
-        // 미리보기 함수 호출
-        $('#post_title_id, #post_markdown_id, #post_tag_id').on('input', previewFunction);
-
-        // 이미지 업로드 함수 호출
-        $('#post_images_upload_button').on('click', imageuploadFunction);
-
-        // F5 키와 새로고침 버튼 클릭을 감지하여 handleRefresh 함수를 실행합니다.(작동 안됨 ㅠㅠ)
-        $(window).on('beforeunload', function() {
-            handleRefresh();
-        });
-    });
-
-    // 실시간 미리보기 이벤트 함수
+    // 미리보기 기능을 구현하는 기능
     function previewFunction() {
         var title = $('#post_title_id').val();
         // 위 $('#di명').on('input', function(){})에서 id명이 여러 개일 경우, 마크다운 택스트를 직접 지정
@@ -97,8 +80,8 @@
             },
             success: function(response){
                 handleSuccess(response);
-                // 응답 값을 스토리지에 저장(작동 안됨 ㅠㅠ)
-                PreviewHandleStorage(response);
+                // 응답 값을 스토리지에 저장(현재 사용 보류)
+                //PreviewHandleStorage(response);
             },
             error: function(xhr, status, error) {
                 console.error(xhr.responseText)
@@ -107,7 +90,7 @@
         });
     }
 
-    // 이미지 첨부 이벤트 함수
+        // 페이지가 모두 로드되면 해당 이벤트 실행 준비
     function imageuploadFunction() {
         // FormData객체에서는 Form의 텍스트 데이터만 가져와서 저장한다.
         var form_data = new FormData($('#post_markdown_form')[0]);
@@ -126,8 +109,8 @@
                 $('#post_markdown_id').val(response.markdown_text);
                 $('#post_images_upload_field').val('')
                 handleSuccess(response);
-                // 응답 값을 스토리지에 저장(작동 안됨 ㅠㅠ)
-                ImageuploadHandleStorage(response);
+                // 응답 값을 스토리지에 저장(현재 사용 보류)
+                //ImageuploadHandleStorage(response);
             },
             error: function(xhr, status, error) {
                 console.error(xhr.responseText)
@@ -136,7 +119,16 @@
         });
     }
 
-    // 공통 콜백 함수
+    // 페이지가 모두 로드되면 해당 이벤트 실행 준비
+    $(document).ready(function(){
+        // 미리보기 함수 호출
+        $('#post_title_id, #post_markdown_id, #post_tag_id').on('input', previewFunction);
+
+        // 이미지 업로드 함수 호출
+        $('#post_images_upload_button').on('click', imageuploadFunction);
+    });
+
+    // 콜백 함수
     function handleSuccess(response) {
         $('#post_title_preview').text(response.title);
         $('#post_content_preview').html(response.html_preview);
@@ -156,23 +148,27 @@
         // 이미지 첨부 핸들 실행시마다 실행 결과를 '세션 스토리지'에 저장
         sessionStorage.setItem('markdown_field', response.markdown_text);
     }
+</script>
 
-    // 페이지 새로고침 시, 세션 스토리지에 저장되어 있던 데이터 호출하여 해당 id 요소에 넣는 함수(작동 안됨 ㅠㅠ)
+<!-- 새로고침 시, 폼 필드에 입력된 값을 보존하기 위해 '세션 스토리지'에 저장되어 있는 값을 반환(현재 사용 보류) -->
+<script>
+    // 페이지 새로고침 시, 세션 스토리지에 저장되어 있던 데이터 호출하여 해당 id 요소에 넣는 함수
     function handleRefresh() {
         // 폼 필드 요소에 세션 스토리지 데이터 넣기
         $('#post_title_id').val(sessionStorage.getItem('title_preview'));
-        //$('#post_markdown_id').val(sessionStorage.getItem('markdown_field'));
+        $('#post_markdown_id').val(sessionStorage.getItem('markdown_field'));
         $('#post_tag_id').val(sessionStorage.getItem('tag_preview'));
 
         // 미리보기 요소에 세션 스토리지 데이터 넣기
         //$('#post_title_preview').text(sessionStorage.getItem('title_preview'));
-        $('#post_content_preview').html(sessionStorage.getItem('content_preview'));
+        //$('#post_content_preview').html(sessionStorage.getItem('content_preview'));
         //$('#post_tag_preview').text(sessionStorage.getItem('tag_preview'));
-
-        // 일정 시간 후에 이벤트 활성화
-        setTimeout(function() {
-            eventsEnabled = true;
-        }, 10000);
     }
+
+    // 새로고침 이벤트 실행 시, 지정된 함수 실행
+    //$(document).ready(function(){
+        // F5 키와 새로고침 버튼 클릭을 감지하여 handleRefresh 함수를 실행합니다.
+        //window.addEventListener("beforeunload", handleRefresh);
+    //});
 </script>
 {% endblock %}
