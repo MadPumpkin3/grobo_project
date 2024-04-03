@@ -39,7 +39,7 @@ class Logout(generic.View):
 class Join(generic.FormView):
     form_class = JoinForm
     template_name = 'users/join.html'
-    success_url = reverse_lazy('users:login')
+    success_url = reverse_lazy('users:login') # reverse_lazy(): URL을 역으로 해석하는 함수(즉, URL 패턴 이름을 사용하여 해당 URL를 생성하는데 사용)
     
     def form_valid(self, form):
         # 유효성을 통과한 폼 데이터를 받기 위해서는 form.cleaned_data로 불러와야 한다.

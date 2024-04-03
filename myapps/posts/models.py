@@ -9,7 +9,7 @@ class Post(models.Model):
     content = MarkdownxField("내용", blank=True, null=True)
     created = models.DateTimeField("생성일시", auto_now_add=True)
     
-    tag = models.ManyToManyField("feeds.HashTag", verbose_name="태그명", related_name="tag_posts")
+    tag = models.ManyToManyField("feeds.HashTag", verbose_name="태그명", related_name="tag_posts", blank=True)
     
     def __str__(self):
         return self.title

@@ -1,4 +1,5 @@
 {% extends 'base/base_nav.html' %}
+{% load posts_filters %}
 {% load static %}
 
 {% block css %}
@@ -12,7 +13,7 @@
 {% block content %}
     <h1>Post 생성 페이지</h1>
     <!-- 마크다운 텍스트 필드가 보여지는 부분 -->
-    <form id="post_markdown_form" action="{% url 'posts:posts_save' %}" enctype="multipart/form-data" method="post">
+    <form id="post_markdown_form" enctype="multipart/form-data" method="post">
         {% csrf_token %}
         <div>
             <input id="post_images_upload_field" name="post_images_upload_field" type="file" multiple><br>
@@ -46,9 +47,18 @@
     </div>
 {% endblock %}
 {% block js %}
-<!-- 페이지 로드 완료 후, 이벤트 핸들러 정의 -->
 <script>
-    // 페이지가 모두 로드되면 해당 이벤트 핸들러 및 함수 실행 준비
+    // 초기화 버튼 클릭 시에 이벤트 설정 예정
+    // 마지막에 세션 스토리지에 있는 데이터 제거 진행
+</script>
+<script>
+    // 포스트 저장 버튼 클릭 시에 이벤트 설정 예정
+    // 마지막에 세션 스토리지에 있는 데이터 제거 진행
+    // 데이터 제거 코드: sessionStorage.removeItem('key');
+    // 모든 데이터 제거 코드: sessionStorage.clear();
+</script>
+<script>
+    // 페이지가 모두 로드되면 해당 이벤트 실행 준비
     $(document).ready(function(){
         // 지정 요소에 데이터 입력 이벤트 발생시 지정된 함수 호출
         $('#post_title_id, #post_markdown_id, #post_tag_id').on('input', previewFunction);
@@ -56,17 +66,13 @@
         // 지정 요소에 버튼 클릭 이벤트 발생시 지정된 함수 호출
         $('#post_images_upload_button').on('click', imageuploadFunction);
 
-        // 페이지 새로고침으로 로딩시, 세션 스토리지에 있는 데이터들을 지정된 필드 요소에 넣는 함수
-        RefreshSessionStorageData();
+        // 지정된 요소가 포커스를 잃을 때(입력 또는 클릭 중 아닐때/ 'blur') 이벤트 발생 시, 일정 시간마다 함수 호출
+        $('#post_title_id, #post_markdown_id, #post_tag_id, #post_images_upload_button').on('input', debounce(PostSessionStorage, 10000));
 
-        $('#form_submit').on('click', function(){
-            sessionStorage.clear();
-        });
+        // F5 키와 새로고침 버튼 클릭을 감지하여 handleRefresh 함수를 실행합니다.(작동 안됨 ㅠㅠ)
+        handleRefresh();
     });
-</script>
 
-<!-- 실시간 미리보기 이벤트 함수 정의 -->
-<script>
     // 실시간 미리보기 이벤트 함수
     function previewFunction() {
         var title = $('#post_title_id').val();
@@ -89,8 +95,8 @@
             },
             success: function(response){
                 handleSuccess(response);
-                // 응답 값을 세션 스토리지에 저장(페이지 새로고침 시, 입력 값들이 유지될 수 있게 함.)
-                PostSessionStorage(response);
+                // 응답 값을 스토리지에 저장(작동 안됨 ㅠㅠ)
+                //PreviewHandleStorage(response);
             },
             error: function(xhr, status, error) {
                 console.error(xhr.responseText)
@@ -98,10 +104,7 @@
             }
         });
     }
-</script>
 
-<!-- 이미지 첨부 이벤트 함수 정의 -->
-<script>
     // 이미지 첨부 이벤트 함수
     function imageuploadFunction() {
         // FormData객체에서는 Form의 텍스트 데이터만 가져와서 저장한다.
@@ -121,7 +124,6 @@
                 $('#post_markdown_id').val(response.markdown_text);
                 $('#post_images_upload_field').val('')
                 handleSuccess(response);
-                ImageuploadHandleStorage(response);
             },
             error: function(xhr, status, error) {
                 console.error(xhr.responseText)
@@ -129,58 +131,52 @@
             }
         });
     }
-</script>
 
-<!-- 이벤트 함수의 공통 콜백 함수 정의 -->
-<script>
     // 공통 콜백 함수
     function handleSuccess(response) {
         $('#post_title_preview').text(response.title);
         $('#post_content_preview').html(response.html_preview);
         $('#post_tag_preview').text(response.tag);
     }
-</script>
 
-<!-- 세션 스토리지 기능 함수 정의 -->
-<script>
-    // 실시간 데이터 입력시 마다, 지정된 필드 요소에 세션 스토리지에 저장되어 있는 데이터를 넣는 함수
-    function PostSessionStorage(response) {
-        sessionStorage.setItem('title_field', response.title);
-        sessionStorage.setItem('content_field', $('#post_markdown_id').val());
-        sessionStorage.setItem('tag_field', response.tag);
-
-        sessionStorage.setItem('content_preview', response.html_preview);
+    // 받아 온 타이머가 끝날 경우, 지정된 함수를 실행하는 함수
+    function debounce(func, delay) {
+        let timer;
+        return function() {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                func.apply(this, arguments);
+            }, delay);
+        };
     }
 
-    // 이미지 첨부 이벤트 응답 값을 새로고침해도 유지할 수 있게 '세션 스토리지'에 저장하는 함수(현재 사용 보류)
-    function ImageuploadHandleStorage(response) {
-        // 이미지 첨부 핸들 실행시마다 실행 결과를 '세션 스토리지'에 저장
-        sessionStorage.setItem('content_field', response.markdown_text);
-        sessionStorage.setItem('content_preview', response.markdown_html);
+    // 지정된 필드 요소에 세션 스토리지에 저장되어 있는 데이터를 넣는 함수
+    function PostSessionStorage() {
+        sessionStorage.setItem('title_field', $('#post_title_id').val());
+        sessionStorage.setItem('content_field', $('#post_markdown_id').val());
+        sessionStorage.setItem('tag_field', $('#post_tag_id').val());
     }
 
     // 페이지 새로고침 시, 세션 스토리지에 저장되어 있던 데이터 호출하여 해당 id 요소에 넣는 함수(작동 안됨 ㅠㅠ)
-    function RefreshSessionStorageData() {
+    function handleRefresh() {
         // 폼 필드 요소에 세션 스토리지 데이터 넣기
         $('#post_title_id').val(sessionStorage.getItem('title_field'));
         $('#post_markdown_id').val(sessionStorage.getItem('content_field'));
         $('#post_tag_id').val(sessionStorage.getItem('tag_field'));
-
-        // 미리보기 요소에 세션 스토리지 데이터 넣기
-        $('#post_title_preview').text(sessionStorage.getItem('title_field'));
-        $('#post_content_preview').html(sessionStorage.getItem('content_preview'));
-        $('#post_tag_preview').text(sessionStorage.getItem('tag_field'));
     }
 </script>
-
-<script>
-    // 초기화 버튼 클릭 시에 이벤트 설정 예정
-    // 마지막에 세션 스토리지에 있는 데이터 제거 진행
-</script>
-<script>
-    // 포스트 저장 버튼 클릭 시에 이벤트 설정 예정
-    // 마지막에 세션 스토리지에 있는 데이터 제거 진행
-    // 데이터 제거 코드: sessionStorage.removeItem('key');
-    // 모든 데이터 제거 코드: sessionStorage.clear();
-</script>
 {% endblock %}
+
+<!-- // 미리보기 이벤트 응답 값을 새로고침해도 유지할 수 있게 '세션 스토리지'에 저장하는 함수(현재 사용 보류)
+function PreviewHandleStorage(response) {
+    // 미리보기 핸들 실행시마다 실행 결과를 '세션 스토리지'에 저장(title과 tag는 해당 입력 필드 값으로도 넣을 수 있음)
+    sessionStorage.setItem('title_preview', response.title);
+    sessionStorage.setItem('content_preview', response.html_preview);
+    sessionStorage.setItem('tag_preview', response.tag);
+}
+
+// 이미지 첨부 이벤트 응답 값을 새로고침해도 유지할 수 있게 '세션 스토리지'에 저장하는 함수(현재 사용 보류)
+function ImageuploadHandleStorage(response) {
+    // 이미지 첨부 핸들 실행시마다 실행 결과를 '세션 스토리지'에 저장
+    sessionStorage.setItem('markdown_field', response.markdown_text);
+} -->
