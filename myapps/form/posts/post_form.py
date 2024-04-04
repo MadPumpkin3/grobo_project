@@ -34,9 +34,18 @@ class PostCustomEditorForm(forms.Form):
             # 입력된 태그 문자열을 '#'기준으로 객체를 분할하고, tag.strip()으로 공백을 없앤 다음 데이터가 있는지 없는지 검사 후, 
             # 데이터가 있으면 strip()을 실행해서 공백 없는 단어만 반환
             # 중요 - if tag.strip() 문은 strip()을 했을 때 공백 여부를 판단만 하는거지 실제로 strip()메서드를 실행하지는 않는다.
-            tags = [tag.strip() for tag in tag_data.split('#') if tag.strip()]
-            # 분리된 각 tag를 리스트 형태인 tags로 반환(view)에 참고해서 db에 넣기
+            tags = []
+            for tag in tag_data:
+                tag = str(tag).strip()
+                
+                if tag:
+                    tags.append(tag)
+                    
             return tags
+
+            # tags = [tag.strip() for tag in tag_data.split('#') if tag.strip()]
+            # # 분리된 각 tag를 리스트 형태인 tags로 반환(view)에 참고해서 db에 넣기
+            # return tags
         
 # 포스트 댓글 생성 폼
 class PostCommentForm(forms.ModelForm):

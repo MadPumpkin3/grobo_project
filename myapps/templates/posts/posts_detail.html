@@ -1,0 +1,21 @@
+{% extends 'base.base_nav.html' %}
+{% load static %}
+{% load posts_filters %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+    <h1>Post Detail</h1>
+    <h2>{{ object.title }}</h2>
+    <p>{{ object.content|formatted_markdown }} </p>
+    <p>Tags:</p>
+    <div>
+        {% for tag in object.tag.all %}
+            <span>{{ tag }}</span>
+        {% endfor %}
+    </div>
+{% endblock}
+
+{% block js %}
+{% endblock %}

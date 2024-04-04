@@ -93,8 +93,9 @@
                 PostSessionStorage(response);
             },
             error: function(xhr, status, error) {
+                var errorMessage = JSON.parse(xhr.responseText).error; // 반환된 응답(xhr)에서 본문(responseText)를 가져와 파싱하고, 파싱된 본문에서 'error'키로 값을 가져온다.
                 console.error(xhr.responseText)
-                alert(error)
+                alert(errorMessage) // error 키로 가져온 'error message'를 사용자가 볼 수 있게 표시힌다.
             }
         });
     }
@@ -124,8 +125,9 @@
                 ImageuploadHandleStorage(response);
             },
             error: function(xhr, status, error) {
+                var errorMessage = JSON.parse(xhr.responseText).error; // 반환된 응답(xhr)에서 본문(responseText)를 가져와 파싱하고, 파싱된 본문에서 'error'키로 값을 가져온다.
                 console.error(xhr.responseText)
-                alert(error)
+                alert(errorMessage) // error 키로 가져온 'error message'를 사용자가 볼 수 있게 표시힌다.
             }
         });
     }

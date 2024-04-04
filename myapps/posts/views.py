@@ -1,11 +1,13 @@
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
-from django.urls import resolve, reverse_lazy
+from django.shortcuts import render, redirect
+from django.urls import resolve, reverse_lazy, reverse
 from django.views import generic, View
 from django.core.cache import cache
 
 from .models import Post, PostComment, PreviewPost, PreviewImage
+from myapps.feeds.models import HashTag
 from myapps.form.posts.post_form import PostCustomEditorForm, PostCommentForm
+from myapps.form.custom_form import validate_image
 
 from markdownx.utils import markdownify
 
@@ -20,6 +22,12 @@ class PortalMainAPI(generic.ListView):
         context = super().get_context_data(**kwargs)
         context['test'] = 'PortalMainAPI 테스트용'
         return context
+
+# 포스트 디테일 페이지 보여주는 뷰
+class PostDetailView(generic.DetailView):
+    model = Post
+    template_name = 'posts/posts_detail.html'
+    context_object_name = 'object'
 
 # 포스트 생성 페이지를 보여주는 뷰
 class MarkdownEditorView(generic.FormView):
@@ -60,9 +68,16 @@ class PostImageUpload(View):
                 first_post = True # 첫 이미지 업로드 시, 임시post 레코드 생성을 위해 'True'로 설정
                 first_upload = True # 첫 이미지 업로드 시, 임시image 레코드 생성을 위해 'True'로 설정
                 preview_post = self.preview_post_save(user, markdown_text, first_post) # markdown_text 데이터를 테이블에 저장하고 텍스트 형식으로 반환하는 메서드
-                self.preview_image_save(preview_post, images_data, first_upload) # 키-값 쌍 배열의 이미지 파일을 테이블에 저장하고 파일 url 형식으로 반환하는 메서드
                 preview_content = preview_post.content # 함수 실행 결과인 'preview_post'레코드 객체에서 'content'속성의 값만 호출하여 변수에 할당
                 post_content = preview_post.content # 함수 실행 결과인 'preview_post'레코드 객체에서 'content'속성의 값만 호출하여 변수에 할당
+                
+                # 이미지를 저장하는 과정에서 유효성 검사도 같이 진행한다.
+                is_valid, error_message = self.preview_image_save(preview_post, images_data, first_upload) # 키-값 쌍 배열의 이미지 파일을 테이블에 저장하고 파일 url 형식으로 반환하는 메서드
+
+                # 이미지 파일의 유효성 검사가 False인 경우, 유효성 검사 함수에서 반환된 오류 메세지를 넣어서 반환
+                if is_valid == False:
+                    return JsonResponse({'error': error_message}, status=400)
+                
                 for image in PreviewImage.objects.filter(post=preview_post):
                     image_url = image.image_url.url # .url : 해당 이미지 객체를 호출인 가능한 형태의 url로 반환해주는 기능
                     preview_content += f'<br/> ![{image.id}번째 이미지]({image_url})' # 여러 이미지가 새로 방향으로 나열되기 위해 '<br/>'를 추가
@@ -73,9 +88,13 @@ class PostImageUpload(View):
                 first_post = False # 두 번째 또는 그 이상 이미지 업로드 시, 기존 임시post 레코드를 가져오기 위해 'False'로 설정
                 first_upload = False # 두 번째 또는 그 이상 이미지 업로드 시, 기존 임시image 레코드를 가져오기 위해 'False'로 설정
                 preview_post = self.preview_post_save(user, markdown_text, first_post)
-                preview_image_id = self.preview_image_save(preview_post, images_data, first_upload)
                 preview_content = preview_post.content
                 post_content = preview_post.content
+                
+                is_valid, preview_image_id = self.preview_image_save(preview_post, images_data, first_upload)
+                
+                if is_valid == False:
+                    return JsonResponse({'error': preview_image_id}, status=400)
 
                 for id in preview_image_id:
                     image_objects = PreviewImage.objects.get(id=id)
@@ -89,7 +108,6 @@ class PostImageUpload(View):
         return JsonResponse({'error': "이미지 첨부 상식의 요청이 XML 방식의 요청이 아닙니다."}, status=400)
     
     def preview_post_save(self, user, markdown_text, first_post):
-        
         if first_post == True: # 신규 작성인 경우, 임시 테이블에 신규 임시post 레코드 생성
             preview_post = PreviewPost.objects.create(user=user, content = markdown_text)
         else: # 추가 작성인 경우, 기존에 있던 임시 post 레코드 호출 및 내용(content 속성) 업데이트
@@ -101,37 +119,64 @@ class PostImageUpload(View):
         return preview_post # 저장된 markdown_text를 텍스트 데이터 형식으로 반환
         
     def preview_image_save(self, preview_post, images_data, first_upload):
-        
         if first_upload == True:
             for image in images_data:
-                PreviewImage.objects.create(post = preview_post, image_url = image)
+                is_valid, error_message = validate_image(image)
+                if is_valid:
+                    PreviewImage.objects.create(post = preview_post, image_url = image)
+                else:
+                    return False, error_message
+                
+            return True, None
             
         else:
             preview_image_id = [] # 새로 추가될 이미지 id 저장을 위한 리스트 변수 선언
             for image in images_data:
-                preview_image = PreviewImage.objects.create(post = preview_post, image_url = image)
-                preview_image_id.append(preview_image.id) # 기존에 있던 이미지 id의 중복 추가를 방지하기 위해 새로 추가하는 이미지 id만 추출
-            return preview_image_id
+                is_valid, error_message = validate_image(image)
+                if is_valid:
+                    preview_image = PreviewImage.objects.create(post = preview_post, image_url = image)
+                    preview_image_id.append(preview_image.id) # 기존에 있던 이미지 id의 중복 추가를 방지하기 위해 새로 추가하는 이미지 id만 추출
+                else:
+                    return False, error_message
+                
+            return True, preview_image_id
 
+# 포스트를 최종적으로 저장하는 뷰
 class PostSave(generic.FormView):
     http_method_names = ['post'] # 뷰가 POST 요청만 받게 설정
-    success_url = reverse_lazy('posts:posts_add')
-    
-    def post(self, request, *args, **kwargs):
-        form = PostCustomEditorForm(request.POST)
-        image_data = request.FILES.getlist('post_images_upload_field')
-        
-        if image_data:
-            if image_data.is_valid():
-                return self.form_valid(form)
-            
-            else: 
-                return self.form_invalid(form)
+    form_class = PostCustomEditorForm # 폼 초기화
     
     def form_valid(self, form):
-        # 이미지 데이터가 None인 경우, 저장 안함.
-        return super().form_valid(form)
+        user = self.request.user
+        
+        title = form.cleaned_data['title']
+        content = form.cleaned_data['content']
+        tags = form.cleaned_data['tags']
+        
+        post = Post.objects.create(user = user, title = title, content = content)
+        
+        for tag_name in tags:
+            tag, created = HashTag.objects.get_or_create(tag_name = tag_name) # get_or_create: 지정된 객체가 있으면 가져오고 없으면 새로 생성하는 함수
+            post.tag.add(tag) # 테이블의 'ManyToManyField'인 경우에만 사용 가능함 함수, 해당 'ManyToManyField'에 객체를 '추가'하는 기능
+        
+        if PreviewPost.objects.filter(user=user).exists():
+            preview_post = PreviewPost.objects.filter(user=user).first()
+            if PreviewImage.objects.filter(post=preview_post).exists():
+                preview_images = PreviewImage.objects.filter(post=preview_post) # 이미지 객체들을 쿼리셋 형식으로 가져옴(.all()을 쓰면 리스트 형식으로 가져옴)
+                for image in preview_images: # 쿼리셋 형식의 이미지 객체들을 하나씩 꺼내옴.
+                    image.post = post
+                    image.save()
+                    
+            preview_post_delete(user) # 사용자의 preview_post가 있을 때, preview_post 삭제 함수 실행
+        
+        url = reverse('posts:posts_detail', kwargs={'post_id': post.id})
+        
+        return redirect(url)
     
     def form_invalid(self, form):
-        
         return super().form_invalid(form)
+    
+def preview_post_delete(user):
+    if PreviewPost.objects.filter(user=user).exists():
+        preview_post = PreviewPost.objects.filter(user=user).first()
+        preview_post.delete()

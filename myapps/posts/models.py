@@ -43,4 +43,4 @@ class PreviewPost(models.Model):
 # 포스트 미리보기용 이미지 데이터 테이블(임시 보관용 테이블)
 class PreviewImage(models.Model):
     post = models.ForeignKey('posts.PreviewPost', verbose_name='미리보기 이미지', on_delete=models.CASCADE)
-    image_url = models.ImageField('포스트 미리보기 이미지', upload_to='post/preview', blank=True, null=True)
+    image_url = models.ImageField('포스트 미리보기 이미지', upload_to='post/image', blank=True, null=True)
