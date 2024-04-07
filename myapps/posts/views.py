@@ -4,7 +4,7 @@ from django.urls import resolve, reverse_lazy, reverse
 from django.views import generic, View
 from django.core.cache import cache
 
-from .models import Post, PostComment, PreviewPost, PreviewImage
+from .models import Post, PostImage, PostComment, PreviewPost
 from myapps.feeds.models import HashTag
 from myapps.form.posts.post_form import PostCustomEditorForm, PostCommentForm
 from myapps.form.custom_form import validate_image
@@ -27,7 +27,7 @@ class PortalMainAPI(generic.ListView):
 class PostDetailView(generic.DetailView):
     model = Post
     template_name = 'posts/posts_detail.html'
-    context_object_name = 'object'
+    context_object_name = 'object'    
 
 # 포스트 생성 페이지를 보여주는 뷰
 class MarkdownEditorView(generic.FormView):
@@ -78,7 +78,7 @@ class PostImageUpload(View):
                 if is_valid == False:
                     return JsonResponse({'error': error_message}, status=400)
                 
-                for image in PreviewImage.objects.filter(post=preview_post):
+                for image in PostImage.objects.filter(preview_post=preview_post):
                     image_url = image.image_url.url # .url : 해당 이미지 객체를 호출인 가능한 형태의 url로 반환해주는 기능
                     preview_content += f'<br/> ![{image.id}번째 이미지]({image_url})' # 여러 이미지가 새로 방향으로 나열되기 위해 '<br/>'를 추가
                     post_content += f'\n<br/> ![{image.id}번째 이미지]({image_url})' # post_content 변수는 마크다운 필드에 들어갈 값으로 '문장'의 줄바꿈을 위해 '텍스트 필드'의 줄바꿈 키워드인 '/n'을 추가
@@ -97,7 +97,7 @@ class PostImageUpload(View):
                     return JsonResponse({'error': preview_image_id}, status=400)
 
                 for id in preview_image_id:
-                    image_objects = PreviewImage.objects.get(id=id)
+                    image_objects = PostImage.objects.get(id=id)
                     image_url = image_objects.image_url.url
                     preview_content += f'<br/> ![{id}번째 이미지]({image_url})'
                     post_content += f'\n<br/> ![{id}번째 이미지]({image_url})'
@@ -123,7 +123,7 @@ class PostImageUpload(View):
             for image in images_data:
                 is_valid, error_message = validate_image(image)
                 if is_valid:
-                    PreviewImage.objects.create(post = preview_post, image_url = image)
+                    PostImage.objects.create(preview_post = preview_post, image_url = image)
                 else:
                     return False, error_message
                 
@@ -134,7 +134,7 @@ class PostImageUpload(View):
             for image in images_data:
                 is_valid, error_message = validate_image(image)
                 if is_valid:
-                    preview_image = PreviewImage.objects.create(post = preview_post, image_url = image)
+                    preview_image = PostImage.objects.create(preview_post = preview_post, image_url = image)
                     preview_image_id.append(preview_image.id) # 기존에 있던 이미지 id의 중복 추가를 방지하기 위해 새로 추가하는 이미지 id만 추출
                 else:
                     return False, error_message
@@ -151,7 +151,7 @@ class PostSave(generic.FormView):
         
         title = form.cleaned_data['title']
         content = form.cleaned_data['content']
-        tags = form.cleaned_data['tags']
+        tags = form.cleaned_data['tag']
         
         post = Post.objects.create(user = user, title = title, content = content)
         
@@ -161,15 +161,16 @@ class PostSave(generic.FormView):
         
         if PreviewPost.objects.filter(user=user).exists():
             preview_post = PreviewPost.objects.filter(user=user).first()
-            if PreviewImage.objects.filter(post=preview_post).exists():
-                preview_images = PreviewImage.objects.filter(post=preview_post) # 이미지 객체들을 쿼리셋 형식으로 가져옴(.all()을 쓰면 리스트 형식으로 가져옴)
+            if PostImage.objects.filter(preview_post=preview_post).exists():
+                preview_images = PostImage.objects.filter(preview_post=preview_post) # 이미지 객체들을 쿼리셋 형식으로 가져옴(.all()을 쓰면 리스트 형식으로 가져옴)
                 for image in preview_images: # 쿼리셋 형식의 이미지 객체들을 하나씩 꺼내옴.
                     image.post = post
                     image.save()
                     
-            preview_post_delete(user) # 사용자의 preview_post가 있을 때, preview_post 삭제 함수 실행
+            # 사용자의 preview_post가 있을 때, preview_post 삭제 함수 실행(preview_post 객체가 삭제되면, PostImage에 연결된 preview_post필드의 값은 자동으로 None 처리됨.)
+            preview_post_delete(user) 
         
-        url = reverse('posts:posts_detail', kwargs={'post_id': post.id})
+        url = reverse('posts:posts_detail', kwargs={'pk': post.id})
         
         return redirect(url)
     

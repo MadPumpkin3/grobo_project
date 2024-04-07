@@ -1,4 +1,4 @@
-{% extends 'base.base_nav.html' %}
+{% extends 'base/base_nav.html' %}
 {% load static %}
 {% load posts_filters %}
 
@@ -12,10 +12,10 @@
     <p>Tags:</p>
     <div>
         {% for tag in object.tag.all %}
-            <span>{{ tag }}</span>
+            <span>#{{ tag }}</span>
         {% endfor %}
     </div>
-{% endblock}
+{% endblock %}
 
 {% block js %}
 {% endblock %}

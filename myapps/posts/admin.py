@@ -4,7 +4,7 @@ from django.forms import CheckboxSelectMultiple
 from markdownx.admin import MarkdownxModelAdmin
 from markdownx.models import MarkdownxField
 from markdownx.widgets import AdminMarkdownxWidget
-from .models import Post, PostComment, PostImage, PreviewPost, PreviewImage
+from .models import Post, PostComment, PostImage, PreviewPost
 import admin_thumbnails
 
 # Register your models here.
@@ -19,14 +19,6 @@ class PostImageInline(admin.TabularInline):
     model = PostImage
     extra = 1
     verbose_name = "이미지 업로드"
-    
-@admin_thumbnails.thumbnail("image_url")
-class PreviewImageInline(admin.TabularInline):
-    model = PreviewImage
-    extra = 1
-    verbose_name = "미리보기 이미지 업로드"
-
-# class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(MarkdownxModelAdmin):
@@ -62,7 +54,7 @@ class PreviewPostAdmin(MarkdownxModelAdmin):
         ('추가내용', {'fields': ('tag',)}),
     ]
     
-    inlines = [PreviewImageInline]
+    inlines = [PostImageInline]
     
     formfield_overrides = {
         MarkdownxField: {'widget': AdminMarkdownxWidget},
