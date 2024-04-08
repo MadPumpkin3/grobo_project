@@ -12,13 +12,14 @@
         <button type="submit">Page Switching</button>
     </form>
     <a href="{% url 'feeds:feeds_main' %}">Grobat</a>
-    <form action="{% url 'users:logout' %}" method="post">
+    <form action="{{ login_button_url }}" method="post">
         {% csrf_token %}
-        <button type="submit">logout</button>
+        <button type="submit">{{ login_button_text }}</button>
     </form>
 {% endblock %}
 
 {% block content %}{% endblock %}
+
 {% block js %}
     <script>
         // 현재 페이지 URL을 hidden input 필드에 설정

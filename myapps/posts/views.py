@@ -3,8 +3,10 @@ from django.shortcuts import render, redirect
 from django.urls import resolve, reverse_lazy, reverse
 from django.views import generic, View
 from django.core.cache import cache
+from django.contrib.auth import authenticate
 
 from .models import Post, PostImage, PostComment, PreviewPost
+from myapps.users.models import User
 from myapps.feeds.models import HashTag
 from myapps.form.posts.post_form import PostCustomEditorForm, PostCommentForm
 from myapps.form.custom_form import validate_image
@@ -14,20 +16,42 @@ from markdownx.utils import markdownify
 # Create your views here.
 
 # 데이터베이스에 있는 포스트 불러오는 뷰
-class PortalMainAPI(generic.ListView):
+class PortalMainAPI(generic.TemplateView):
     template_name = 'posts/portal_main.html'
-    model = Post
     
     def get_context_data(self, **kwargs):
+        login_button_text, login_button_url, login_yn = user_authenticated(self.request.user)
         context = super().get_context_data(**kwargs)
-        context['test'] = 'PortalMainAPI 테스트용'
+        context['login_button_text'] = login_button_text
+        context['login_button_url'] = login_button_url
+        context['text'] = "환영합니다. 포털 메인 페이지입니다."
         return context
+
+# 포털 검색 결과 페이지
+class PortalSearchResults(generic.TemplateView):
+    template_name = 'posts/portal_search_results.html'
+    
+    def get_context_data(self, **kwargs):
+        login_button_text, login_button_url, login_yn = user_authenticated(self.request.user)
+        context = super().get_context_data(**kwargs)
+        context['login_button_text'] = login_button_text
+        context['login_button_url'] = login_button_url
+        context['text'] = '환영합니다. 포털 검색 결과 페이지입니다.'
+        return context
+
+
+# 유저 로그인 여부에 따른 버튼 변환
+def user_authenticated(user):
+    if user.is_authenticated:
+        return "Logout", reverse('users:logout'), True
+    else:
+        return "Login", reverse('users:login'), False
 
 # 포스트 디테일 페이지 보여주는 뷰
 class PostDetailView(generic.DetailView):
     model = Post
     template_name = 'posts/posts_detail.html'
-    context_object_name = 'object'    
+    context_object_name = 'object'
 
 # 포스트 생성 페이지를 보여주는 뷰
 class MarkdownEditorView(generic.FormView):
