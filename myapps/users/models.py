@@ -59,7 +59,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     login_at = models.DateTimeField("최근 로그인 일시", auto_now=True, blank=True, null=True)
     # 유저가 로그인 시, 포털 사이트(값:None) 또는 플랫폼 사이트(값:1)에 따라 이동할 수 있도록 필드 추가
     # 데이터 입력 조건을 0 ~ 1로 제한
-    # 코드의 가독성과 명확성을 위해 bool형석으로도 할 수 있지만, 저장공간과 검색 성능 향상을 위해 0,1로만 작업
+    # 코드의 가독성과 명확성을 위해 bool형식으로도 할 수 있지만, 저장공간과 검색 성능 향상을 위해 0,1로만 작업
     default_main_page = models.IntegerField(
         "기본 메인 페이지", 
         default=0,
@@ -79,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="내가 팔로잉한 사람들",
         related_name="followers",
         # a,d,e유저가 b유저를 팔로잉(일방적인 친추)을 했다는 전제하에, b.followers.all()를 호출하면 b유저를 기준으로 b를 팔로잉한 모든 유저가 반환된다.
-        symmetrical= False,
+        symmetrical= False, # symmetrical: 대칭 관계 여부를 정하는 속성으로 기본적으로 a가 b를 가지고 있다면 b도 a를 갖는다.(기본값 True)
         through='users.FollowRelation',
         # 중계형 테이블을 따로 만들지 않을 경우, 자동 생성된다.
         )

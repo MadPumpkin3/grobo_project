@@ -44,5 +44,7 @@ class PreviewPost(models.Model):
     created = models.DateTimeField('생성일시', auto_now_add=True)
     
 # 검색 키워드 데이터 테이블
-class SearchKeyword(models.Model):
-    user = models.ForeignKey('users.User', verbose_name='검색자', on_delete=models.CASCADE)
+# class SearchKeyword(models.Model):
+#     user = models.ForeignKey('users.User', verbose_name='검색자', on_delete=models.SET_NULL)
+#     keyword = models.ManyToManyField('self', verbose_name='검색 키워드', related_name='keyword_relation', symmetrical=True)
+#     count = models.IntegerField('검색 횟수', default=1)
