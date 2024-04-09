@@ -4,7 +4,7 @@ from .views import PortalMainAPI, MarkdownEditorView, PostPreview, PostImageUplo
 app_name = 'posts'
 
 urlpatterns = [
-    path('posts_main/', PortalMainAPI.as_view(), name='posts_main'),
+    path('', PortalMainAPI.as_view(), name='posts_main'),
     path('posts_search_results/', PortalSearchResults.as_view(), name='posts_search_results'),
     path('posts_add/', MarkdownEditorView.as_view(), name='posts_add'),
     path('posts_save/', PostSave.as_view(), name='posts_save'),

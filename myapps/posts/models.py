@@ -42,3 +42,7 @@ class PreviewPost(models.Model):
     content = MarkdownxField('내용', blank=True, null=True)
     tag = models.CharField('태그', max_length=255, blank=True, null=True)
     created = models.DateTimeField('생성일시', auto_now_add=True)
+    
+# 검색 키워드 데이터 테이블
+class SearchKeyword(models.Model):
+    user = models.ForeignKey('users.User', verbose_name='검색자', on_delete=models.CASCADE)

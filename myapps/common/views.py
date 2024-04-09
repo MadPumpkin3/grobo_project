@@ -1,7 +1,8 @@
 from django.shortcuts import redirect, render
 from django.views import View
-from django.urls import resolve
+from django.urls import resolve, reverse
 from urllib.parse import urlparse
+from django.contrib.auth import authenticate
 
 # Create your views here.
 
@@ -31,3 +32,9 @@ class PageSwitching(View):
             else:
                 return redirect('feeds:feeds_main')
             
+# 유저 로그인 여부에 따른 버튼 변환
+def user_authenticated(user):
+    if user.is_authenticated:
+        return "Logout", reverse('users:logout'), True
+    else:
+        return "Login", reverse('users:login'), False     

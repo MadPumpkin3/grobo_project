@@ -14,7 +14,7 @@
     <a href="{% url 'feeds:feeds_main' %}">Grobat</a>
     <form action="{% url 'users:logout' %}" method="post">
         {% csrf_token %}
-        <button type="submit">logout</button>
+        <button type="submit">Logout</button>
     </form>
 {% endblock %}
 
