@@ -74,6 +74,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     like_posts = models.ManyToManyField("posts.Post", verbose_name="좋아요한 포스트", related_name="like_post_users", blank=True)
     like_feeds = models.ManyToManyField("feeds.Feed", verbose_name="좋아요한 피드", related_name="like_feed_users", blank=True)
     
+    # 유저의 검색 키워드 저장 필드(유저 쪽에서만 키워드를 추적할 수 있게 설정 / symmetrical=False)
+    search_keyword = models.ManyToManyField("posts.SearchKeyword", verbose_name='사용자 검색 키워드', related_name='keyword_user', symmetrical=False)
+    
     following = models.ManyToManyField(
         'self',
         verbose_name="내가 팔로잉한 사람들",

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User
 from django.db import models
-from django.forms import RadioSelect
+from django.forms import RadioSelect, CheckboxSelectMultiple
 from myapps.common.models import DefaultMainPageChoices
 # from django.contrib.auth.forms import UserCreationForm
 # from django.contrib.auth import get_user_model
@@ -40,7 +40,8 @@ class CustomUserAdmin(UserAdmin):
         ('개인정보', {'fields': ('username', 'email')}),
         ('추가필드', {'fields': ('profile_image', 
                              'short_description', 
-                             'default_main_page')}),
+                             'default_main_page',
+                             'search_keyword')}),
         ('좋아요', {'fields': ('like_posts', 'like_feeds')}),
         ('권한', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
     ]
@@ -50,6 +51,7 @@ class CustomUserAdmin(UserAdmin):
     # RadioSelect는 라디오 버튼으로 구현한다는 것
     # choices=DefaultMainPageChoices는 선택 사항을 DefaultMainPageChoices클래스에 정의된 방식대로 한다는 뜻
     formfield_overrides = {
+        models.ManyToManyField: {"widget": CheckboxSelectMultiple},
         models.IntegerField: {'widget':RadioSelect(choices=DefaultMainPageChoices)}
     }
     

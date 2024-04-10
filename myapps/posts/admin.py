@@ -4,7 +4,7 @@ from django.forms import CheckboxSelectMultiple
 from markdownx.admin import MarkdownxModelAdmin
 from markdownx.models import MarkdownxField
 from markdownx.widgets import AdminMarkdownxWidget
-from .models import Post, PostComment, PostImage, PreviewPost
+from .models import Post, PostComment, PostImage, PreviewPost, SearchKeyword
 import admin_thumbnails
 
 # Register your models here.
@@ -60,3 +60,14 @@ class PreviewPostAdmin(MarkdownxModelAdmin):
         MarkdownxField: {'widget': AdminMarkdownxWidget},
     }
     
+@admin.register(SearchKeyword)
+class SearchKeywordAdmin(admin.ModelAdmin):
+    list_display = ('id', 'keyword', 'count')
+    fieldsets = [
+        ('키워드', {'fields': ('keyword', )}),
+        ('연관 키워드', {'fields': ('keyword_relation',)}),
+        ('키워드 검색 횟수', {'fields': ('count',)}),
+    ]
+    formfield_overrides = {
+        ManyToManyField: {"widget": CheckboxSelectMultiple}
+    }

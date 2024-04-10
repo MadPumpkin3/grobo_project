@@ -43,8 +43,12 @@ class PreviewPost(models.Model):
     tag = models.CharField('태그', max_length=255, blank=True, null=True)
     created = models.DateTimeField('생성일시', auto_now_add=True)
     
-# 검색 키워드 데이터 테이블
-# class SearchKeyword(models.Model):
-#     user = models.ForeignKey('users.User', verbose_name='검색자', on_delete=models.SET_NULL)
-#     keyword = models.ManyToManyField('self', verbose_name='검색 키워드', related_name='keyword_relation', symmetrical=True)
-#     count = models.IntegerField('검색 횟수', default=1)
+# 검색 키워드 데이터 테이블(User 모델과 다대다 관계에서 유저 모델에서만 키워드를 추적할 수 있게 연결되어 있음. / symmetrical=False)
+class SearchKeyword(models.Model):
+    keyword = models.CharField('검색 키워드', max_length=50)
+    # blank=True로 초기 인스턴스 또는 키워드 1개 인스턴스 생성 시, 무한 생성 요청 해결
+    keyword_relation = models.ManyToManyField('self', verbose_name='연관 키워드', symmetrical=True, blank=True)
+    count = models.IntegerField('검색 횟수', default=1)
+    
+    def __str__(self):
+        return self.keyword
