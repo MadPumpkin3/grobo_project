@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import User, UserSearchKeyword
 from django.db import models
 from django.forms import RadioSelect, CheckboxSelectMultiple
 from myapps.common.models import DefaultMainPageChoices
@@ -40,8 +40,7 @@ class CustomUserAdmin(UserAdmin):
         ('개인정보', {'fields': ('username', 'email')}),
         ('추가필드', {'fields': ('profile_image', 
                              'short_description', 
-                             'default_main_page',
-                             'search_keyword')}),
+                             'default_main_page')}),
         ('좋아요', {'fields': ('like_posts', 'like_feeds')}),
         ('권한', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
     ]
@@ -51,7 +50,7 @@ class CustomUserAdmin(UserAdmin):
     # RadioSelect는 라디오 버튼으로 구현한다는 것
     # choices=DefaultMainPageChoices는 선택 사항을 DefaultMainPageChoices클래스에 정의된 방식대로 한다는 뜻
     formfield_overrides = {
-        models.ManyToManyField: {"widget": CheckboxSelectMultiple},
+        # models.ManyToManyField: {"widget": CheckboxSelectMultiple}, # 아래에 있는 'filter_horizontal' 속성과 공존할 수 없다.
         models.IntegerField: {'widget':RadioSelect(choices=DefaultMainPageChoices)}
     }
     
@@ -65,3 +64,9 @@ class CustomUserAdmin(UserAdmin):
     
     # user 추가 시, 모든 속성을 일괄로 입력하고 싶어서 user 추가 폼을 변경하는 클래스(그러나 제대로 안돼서 포기..)
     # add_form = CustomUserCreationForm
+    
+@admin.register(UserSearchKeyword)
+class UserSearchKeywordAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'get_at')
+
+    filter_horizontal=('search_keyword',)

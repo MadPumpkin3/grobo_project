@@ -8,6 +8,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 keywords = ['감자', '고구마', '김치', '햇반', '행복', '잡채', '바나나', '사과', '파인애플', '오랑우탄'] # 실제 인덱스는 0~9
 
+
 class RelatedKeywords():
     
     def __init__(self, keywords):

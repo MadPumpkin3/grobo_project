@@ -48,6 +48,19 @@ class PostDetailView(generic.DetailView):
 class MarkdownEditorView(generic.FormView):
     form_class = PostCustomEditorForm
     template_name = 'posts/posts_add.html'
+    
+    # 사용자 로그인 여부에 따른 동적으로 페이지 로드
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            user = request.user
+            default_main_page = user.default_main_page
+            if default_main_page == 0:
+                return redirect('posts:posts_main')
+            else:
+                return redirect('feeds:feeds_main')
+        else:
+            # super()로 부모 클래스'FormView'의 get메서드를 재호출해서 자식 클래스(내가 정의한 클래스: form_class, template_name를 적용한다.)
+            return super().get(request, *args, **kwargs)
 
 # 실시간 미리보기 기능 구현 뷰(템플릿에서 온 Ajax 요청을 처리하는 뷰)
 class PostPreview(View):

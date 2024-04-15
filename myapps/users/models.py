@@ -74,9 +74,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     like_posts = models.ManyToManyField("posts.Post", verbose_name="좋아요한 포스트", related_name="like_post_users", blank=True)
     like_feeds = models.ManyToManyField("feeds.Feed", verbose_name="좋아요한 피드", related_name="like_feed_users", blank=True)
     
-    # 유저의 검색 키워드 저장 필드(유저 쪽에서만 키워드를 추적할 수 있게 설정 / symmetrical=False)
-    search_keyword = models.ManyToManyField("posts.SearchKeyword", verbose_name='사용자 검색 키워드', related_name='keyword_user', symmetrical=False)
-    
     following = models.ManyToManyField(
         'self',
         verbose_name="내가 팔로잉한 사람들",
@@ -118,3 +115,10 @@ class FollowRelation(models.Model):
     
     def __str__(self):
         return f'관계: {self.follow_from} -> {self.follow_to}' 
+    
+# 사용자 검색 키워드 테이블
+class UserSearchKeyword(models.Model):
+    user = models.ForeignKey('User', verbose_name='사용자', on_delete=models.CASCADE)
+    # 유저의 검색 키워드 저장 필드(유저 쪽에서만 키워드를 추적할 수 있게 설정 / symmetrical=False)
+    search_keyword = models.ManyToManyField("posts.SearchKeyword", verbose_name='사용자 검색 키워드', related_name='keyword_user', symmetrical=False, blank=True)
+    get_at = models.DateTimeField("최근 조회 일시", auto_now_add=True, blank=True) # 사용자가 해당 객체를 부를 때마다 시간이 업데이트 된다.
