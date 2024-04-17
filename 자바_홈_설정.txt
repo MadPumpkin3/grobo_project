@@ -1,0 +1,1 @@
+export JAVA_HOME=/Users/beomtaehyeon/Library/Java/JavaVirtualMachines/openjdk-21.0.1/Contents/Home

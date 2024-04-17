@@ -1,0 +1,174 @@
+{% extends 'base/base_nav.html' %}
+{% load posts_filters %}
+{% load static %}
+
+{% block css %}
+    <!-- 웹 페이지에 jQuery 라이브러리를 추가하는 HTML 스크립트 태그 -->
+    <!-- URL은 Google의 *CDN(Content Delivery Network)을 통해 호스팅되는 *jQuery 라이브러리의 경로를 가리킵니다. -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- 미리보기 사진에 크기 조절을 위해 커스텀 css 생성 -->
+    <link rel="stylesheet" href="{% static 'css/custom_style.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h1>Post 생성 페이지</h1>
+    <!-- 마크다운 텍스트 필드가 보여지는 부분 -->
+    <form id="post_markdown_form" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        <div>
+            <input id="post_images_upload_field" name="post_images_upload_field" type="file" multiple><br>
+            <button type="button" id="post_images_upload_button">이미지 첨부</button>
+        </div>
+        <div>
+            {{ form.title.label }}
+            {{ form.title }}
+        </div>
+        <div>
+            {{ form.content.label }}
+            {{ form.content }}
+        </div>
+        <div>
+            {{ form.tag.label }}
+            {{ form.tag }}
+        </div>
+        <div>
+            <button type="submit" id="form_submit">글 작성</button>
+        </div>
+    </form>
+    <!-- 미리보기가 보여지는 부분 -->
+    <div class="post_preview">
+        <h1>미리보기</h1>
+        <label for="post_title_preview">제목</label>
+        <p id="post_title_preview" class="post-title-preview"></p>
+        <label for="post_content_preview">내용</label>
+        <p id="post_content_preview" class="post-content-preview"></p>
+        <label for="post_tag_preview">태그</label>
+        <p id="post_tag_preview" class="post-tag-preview"></p>
+    </div>
+{% endblock %}
+{% block js %}
+<script>
+    // 초기화 버튼 클릭 시에 이벤트 설정 예정
+    // 마지막에 세션 스토리지에 있는 데이터 제거 진행
+</script>
+<script>
+    // 포스트 저장 버튼 클릭 시에 이벤트 설정 예정
+    // 마지막에 세션 스토리지에 있는 데이터 제거 진행
+    // 데이터 제거 코드: sessionStorage.removeItem('key');
+    // 모든 데이터 제거 코드: sessionStorage.clear();
+</script>
+<script>
+    // 미리보기 기능을 구현하는 기능
+    function previewFunction() {
+        var title = $('#post_title_id').val();
+        // 위 $('#di명').on('input', function(){})에서 id명이 여러 개일 경우, 마크다운 택스트를 직접 지정
+        var markdown_text = $('#post_markdown_id').val();
+        // 위 $('#di명').on('input', function(){})에서 id명이 한 개일 경우, $(this)로 하나만 있는 id명을 가져옴
+        var tag = $('#post_tag_id').val();
+        $.ajax({
+            url: '{% url "posts:posts_preview" %}',
+            type: 'POST',
+            // 헤드에 CSRF 토큰을 넣어 보내는 방식으로 사용하면 오류가 생김.(사용 보류)
+            data: {
+                'title': title,
+                'markdown_text': markdown_text,
+                'tag': tag,
+                // 'input[name=csrfmiddlewaretoken]': POST 폼에는 CSRF_token이 hidden 속성으로 input 필드를 만들어서 요청을 보낼때 같이보낸다.
+                // 'input[name=csrfmiddlewaretoken]': 해당 input 필드의 name 속성은 'csrfmiddlewaretoken'를 가지고 있다.
+                // 그래서 아래 코드는 name 속성이 'csrfmiddlewaretoken'인 input 필드 즉, csrftoken 필드를 선택하고 해당 필드의 값을 가져오는 코드이다.
+                'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response){
+                handleSuccess(response);
+                // 응답 값을 스토리지에 저장(현재 사용 보류)
+                //PreviewHandleStorage(response);
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText)
+                alert(error)
+            }
+        });
+    }
+
+        // 페이지가 모두 로드되면 해당 이벤트 실행 준비
+    function imageuploadFunction() {
+        // FormData객체에서는 Form의 텍스트 데이터만 가져와서 저장한다.
+        var form_data = new FormData($('#post_markdown_form')[0]);
+
+        // FormData 객체에 csrf 토큰을 넣어서 서버에서 인식할 수 있게 한다.
+        form_data.append('csrfmiddlewaretoken', $('#post_markdown_form [name=csrfmiddlewaretoken]').val());
+
+        $.ajax({
+            url: '{% url "posts:posts_images_upload" %}',
+            type: 'POST',
+            data: form_data,
+            processData: false,
+            contentType: false,
+
+            success: function(response){
+                $('#post_markdown_id').val(response.markdown_text);
+                $('#post_images_upload_field').val('')
+                handleSuccess(response);
+                // 응답 값을 스토리지에 저장(현재 사용 보류)
+                //ImageuploadHandleStorage(response);
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText)
+                alert(error)
+            }
+        });
+    }
+
+    // 페이지가 모두 로드되면 해당 이벤트 실행 준비
+    $(document).ready(function(){
+        // 미리보기 함수 호출
+        $('#post_title_id, #post_markdown_id, #post_tag_id').on('input', previewFunction);
+
+        // 이미지 업로드 함수 호출
+        $('#post_images_upload_button').on('click', imageuploadFunction);
+    });
+
+    // 콜백 함수
+    function handleSuccess(response) {
+        $('#post_title_preview').text(response.title);
+        $('#post_content_preview').html(response.html_preview);
+        $('#post_tag_preview').text(response.tag);
+    }
+
+    // 미리보기 이벤트 응답 값을 새로고침해도 유지할 수 있게 '세션 스토리지'에 저장하는 함수(현재 사용 보류)
+    function PreviewHandleStorage(response) {
+        // 미리보기 핸들 실행시마다 실행 결과를 '세션 스토리지'에 저장(title과 tag는 해당 입력 필드 값으로도 넣을 수 있음)
+        sessionStorage.setItem('title_preview', response.title);
+        sessionStorage.setItem('content_preview', response.html_preview);
+        sessionStorage.setItem('tag_preview', response.tag);
+    }
+
+    // 이미지 첨부 이벤트 응답 값을 새로고침해도 유지할 수 있게 '세션 스토리지'에 저장하는 함수(현재 사용 보류)
+    function ImageuploadHandleStorage(response) {
+        // 이미지 첨부 핸들 실행시마다 실행 결과를 '세션 스토리지'에 저장
+        sessionStorage.setItem('markdown_field', response.markdown_text);
+    }
+</script>
+
+<!-- 새로고침 시, 폼 필드에 입력된 값을 보존하기 위해 '세션 스토리지'에 저장되어 있는 값을 반환(현재 사용 보류) -->
+<script>
+    // 페이지 새로고침 시, 세션 스토리지에 저장되어 있던 데이터 호출하여 해당 id 요소에 넣는 함수
+    function handleRefresh() {
+        // 폼 필드 요소에 세션 스토리지 데이터 넣기
+        $('#post_title_id').val(sessionStorage.getItem('title_preview'));
+        $('#post_markdown_id').val(sessionStorage.getItem('markdown_field'));
+        $('#post_tag_id').val(sessionStorage.getItem('tag_preview'));
+
+        // 미리보기 요소에 세션 스토리지 데이터 넣기
+        //$('#post_title_preview').text(sessionStorage.getItem('title_preview'));
+        //$('#post_content_preview').html(sessionStorage.getItem('content_preview'));
+        //$('#post_tag_preview').text(sessionStorage.getItem('tag_preview'));
+    }
+
+    // 새로고침 이벤트 실행 시, 지정된 함수 실행
+    //$(document).ready(function(){
+        // F5 키와 새로고침 버튼 클릭을 감지하여 handleRefresh 함수를 실행합니다.
+        //window.addEventListener("beforeunload", handleRefresh);
+    //});
+</script>
+{% endblock %}

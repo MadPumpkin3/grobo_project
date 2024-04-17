@@ -1,0 +1,9 @@
+python == 3.12.2
+django == 5.0.3
+pillow == 10.2.0 : django의 이미지 처리 라이브러리
+django-apscheduler == 3.10.4
+django-admin-thumbnails == 0.2.8 : django 어드민 페이지에 이미지를 미리보기 가능한 라이브러리
+django-markdownx == 4.0.7 : 마크다운 언어를 사용 가능하게 해주는 라이브러리
+JPype1 == 1.5.0 : Python에서 Java와의 인터페이스를 제공하는 패키지(Python과 Java 간의 통신을 가능하게 해줌) ** 'export JAVA_HOME=' 자바 설치 경로 지정 필요
+konlpy == 0.6.0 : 한국어 형태소 분석 라이브러리 / 한글 형태소 분석 등의 기능을 수행하는 라이브러리(영어도 가능 but, java로 실행되기 때문에 JPype1 설치 필요)
+nltk == 3.8.1 : 영어 형태소 분석 라이브러리(NLTK의 ‘punkt’ 모델 다운로드 필요 / 터미널에 import nltk > nltk.download('punkt'))

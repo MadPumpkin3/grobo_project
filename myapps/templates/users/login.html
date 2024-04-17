@@ -1,0 +1,13 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+    <h1>Grobo 로그인 화면 입니다.</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">로그인</button>
+    </form>
+    <a href="{% url 'users:join' %}">회원가입</a>
+    <br>
+    <a href="{% url 'posts:posts_main' %}">로그인 없이 Grobo(포털 사이트 이용)</a>
+{% endblock %}

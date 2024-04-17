@@ -1,0 +1,12 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+    <h1>Grobo 회원가입</h1>
+    <!-- 프로필 이미지인 이미지 파일을 form에 첨부해서 반환하기 위해 enctype을 설정 -->
+    <form enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">회원가입</button>
+    </form>
+    <a href="{% url 'users:login' %}">로그인</a>
+{% endblock %}

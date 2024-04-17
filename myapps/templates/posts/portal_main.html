@@ -1,0 +1,52 @@
+{% extends 'base/portal_nav.html' %}
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block content %}
+    <!-- 탑 영역 -->
+    <div id="portal_top" class="portal-top">
+        <div id="portal_search" class="portal-search">
+            <span>Grobo</span>
+            <form id="portal_search_box" class="portal-search-box" method="get" action="{% url 'posts:posts_search_results' %}">
+                <input id="portal_search_input" class="portal-search-input" name="portal_search_text" type="text">
+                <button id="portal_search_button" class="portal-search-button" type="submit">검색</button>
+            </form>
+        </div>
+    </div>
+    <!-- 메인 영역(왼쪽) -->
+    <div id="portal_main" class="portal-main">
+        <h1>포털 메인</h1>
+        {{ text }}
+        <!-- 포털 뉴스 영역 -->
+        <div id="portal_news" class="portal-news">
+            <p>포털 뉴스</p>
+        </div>
+        <!-- 포털 광고 영역 -->
+        <div id="portal_ad" class="portal-ad">
+            <p>포털 광고</p>
+        </div>
+        <!-- 포스트 리스트 영역 -->
+        <div id="portal_post_list" class="portal-post-list">
+            <p>포스트 리스트</p>
+        </div>
+    </div>
+    <!-- 사이드 영역(오른쪽) -->
+    <div id="portal_aside" class="portal-aside">
+        <h1>포털 사이드</h1>
+        <!-- 포털 유저 프로필 영역 -->
+        <div id="portal_profile" class="portal-profile">
+            <p>유저 프로필</p>
+        </div>
+        <!-- 포털 쇼핑 영역 -->
+        <div id="protal_shopping" class="portal-shopping">
+            <p>포털 쇼핑</p>
+        </div>
+    </div>
+{% endblock %}
+{% block footer %}
+    <!-- 푸터 영역 -->
+    <div id="portal_footer" class="portal-footer">
+        <h1>포털 푸터</h1>
+    </div>
+{% endblock %}
