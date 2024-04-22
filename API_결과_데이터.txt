@@ -32,7 +32,8 @@
             'description': '[Q2. 장애학<b>이란 무엇인가?</b>] 장애학의 개념과 핵심 질문에 대해서 알아본다. (동영상 출처 : 서울대 지식교양 강연 - 생각의 열쇠)', 
             'thumbnail': 'https://phinf.pstatic.net/tvcast/20230918_82/2xISN_1695011065948YPuzV_PNG/1695010701834.png#1920x1080#m'}, 
             
-            {'title': 'Q8. 베리오그램<b>이란 무엇인가?</b>', 'link': 'https://terms.naver.com/entry.naver?docId=6449360&cid=68053&categoryId=68053', 
+            {'title': 'Q8. 베리오그램<b>이란 무엇인가?</b>', 
+            'link': 'https://terms.naver.com/entry.naver?docId=6449360&cid=68053&categoryId=68053', 
             'description': '[Q8. 베리오그램<b>이란 무엇인가?</b>] 공간 상관성을 위치 또는 거리에 따라 표현해 주는 값을 알아보자.(동영상 출처 : 서울대 지식교양 강연 - 생각의 열쇠)', 
             'thumbnail': 'https://phinf.pstatic.net/tvcast/20210401_143/kRtoB_16172679262729tlgj_JPEG/1617267664998.jpg#1920x1080#m'}, 
             

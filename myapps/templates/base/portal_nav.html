@@ -1,21 +1,24 @@
 {% extends 'base/base.html' %}
-
-{% block css %}{% endblock %}
+{% load static %}
 
 {% block nav %}
-    <a href="{% url 'ai_data:ai_data_main' %}">ATDC - C type</a>
-    <a href="{% url 'posts:posts_main' %}">Grobo</a>
-    <form action="{% url 'common:page_switching' %}" method="post">
-        {% csrf_token %}
-        <!-- 히든 input에 id로 자바스크립트를 설정하여 이 설정을 통해 현재 페이지 값을 'current_url'이름으로 반환되도록 정의 -->
-        <input type="hidden" id="currentUrlInput" name="current_url"  value="">
-        <button type="submit">Page Switching</button>
-    </form>
-    <a href="{% url 'feeds:feeds_main' %}">Grobat</a>
-    <form action="{{ login_button_url }}" method="post">
-        {% csrf_token %}
-        <button type="submit">{{ login_button_text }}</button>
-    </form>
+    <div class="nav-bar">
+        <a href="{% url 'ai_data:ai_data_main' %}">ATDC - C type</a>
+        <div>
+            <a href="{% url 'posts:posts_main' %}">Grobo</a>
+            <form action="{% url 'common:page_switching' %}" method="post">
+                {% csrf_token %}
+                <!-- 히든 input에 id로 자바스크립트를 설정하여 이 설정을 통해 현재 페이지 값을 'current_url'이름으로 반환되도록 정의 -->
+                <input type="hidden" id="currentUrlInput" name="current_url"  value="">
+                <button type="submit">Page Switching</button>
+            </form>
+            <a href="{% url 'feeds:feeds_main' %}">Grobat</a>
+        </div>
+        <form action="{{ login_button_url }}" method="post">
+            {% csrf_token %}
+            <button type="submit">{{ login_button_text }}</button>
+        </form>
+    </div>
 {% endblock %}
 
 {% block content %}{% endblock %}

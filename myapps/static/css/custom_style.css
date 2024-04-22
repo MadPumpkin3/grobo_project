@@ -1,3 +1,4 @@
+포스트 생성 페이지 스타일
 .post_preview {
     width: 600px; /* 이미지를 감싸는 부모 요소의 너비를 지정 */
 }
@@ -6,3 +7,99 @@
     width: 50%; /* 이미지 태그의 너비를 부모 요소의 50%로 지정하여 부모 요소의 너비에 맞게 이미지 크기 조정 */
     height: auto; /* 이미지의 높이를 자동으로 조정하여 가로 세로 비율 유지 */
 }
+
+/* 검색 결과 페이지 스타일 */
+/* #portal_search_top {
+    background-color: #f5f5f5;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+#portal_search_results_box {
+    display: flex;
+    align-items: center;
+    width: 70%;
+    margin: 0 auto;
+}
+
+#portal_search_results_input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#portal_search_results_button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#search_results_data_box {
+    margin: 0 auto;
+    width: 70%;
+}
+
+.encyc-data {
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.encyc-data-title {
+    margin-bottom: 10px;
+}
+
+.encyc-data-description {
+    margin-bottom: 10px;
+}
+
+.encyc-data img {
+    max-width: 100%;
+    height: auto;
+}
+
+#portal_aside {
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+} */
+
+/* 네이게이션 바 스타일 */
+/* .nav-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 999;
+}
+
+.nav-bar a, .nav-bar button {
+    background-color: #f9a825;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin: 0 10px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.nav-bar a:hover, .nav-bar button:hover {
+    background-color: #ffa000;
+}
+
+.nav-bar .logout-form {
+    display: flex;
+    align-items: center;
+} */

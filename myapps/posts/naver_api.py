@@ -12,23 +12,23 @@ from myapps.users.models import UserSearchKeyword, User
 class NaverSearchAPI():
     
     def __init__(self):
-        self.client_id = "Hg_vYawShJasVfnbKDdB"
-        self.client_secret = "b3Eszn4R8y"
+        self.client_id = "Hg_vYawShJasVfnbKDdB" # 네이버 API 사용을 위한 인증 id
+        self.client_secret = "b3Eszn4R8y" # 네이버 API 사용을 위한 인증 pw
         self.search_service_list = ["news", "encyc", "webkr"] # 검색 결과 요청하려는 서비스
         self.search_number_responses = 4 # 검색 결과 데이터의 서비스별 갯수
-        self.algorithms_service_list = ["news", "shop"] # 알고리즘 결과 요청하려는 서비스
+        self.algorithms_service_list = ["news", "shop", "blog"] # 알고리즘 결과 요청하려는 서비스
         self.algorithms_number_responses = 1 # 알고리즘 데이터의 서비스별 갯수
         
     # 검색 실행 시, 검색 api를 요청하는 메서드
     def search_api_request(self, transformed_text):
-        encText = urllib.parse.quote(transformed_text)
-        number_response = self.search_number_responses
+        encText = urllib.parse.quote(transformed_text) # 네이버 API url로 전송을 위해 텍스트를 인코딩
+        number_response = self.search_number_responses # 검색 결과 데이터의 서비스별 갯수 가져오기
         search_results_list = {} # 반환할 딕셔너리 변수 초기화
         
         for service in self.search_service_list:
-            search_data, getcode = self.naver_search_api(encText, service, number_response)
+            search_data, getcode = self.naver_search_api(encText, service, number_response) # 네이버 API 요청 함수에 위 인수를 넣어 실행
             if getcode:
-                search_results_list[service] = search_data
+                search_results_list[service] = search_data # 서비스을 키로 갖는 'API 응답 중 데이터'를 값으로 넣는다.
             else:
                 search_results_list[service] = search_data # 에러 메세지가 포함됨.
         
@@ -40,18 +40,18 @@ class NaverSearchAPI():
         search_results_list = {} # 반환할 딕셔너리 변수 초기화
         
         # 사용자 로그인 여부에 따라 키워드 추출 모델 변경
-        if user.user.is_authenticated:
+        if user.is_authenticated:
             user_keyword_list = UserSearchKeyword.objects.filter(user = user)[:3] # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
-            enctext_list = [user_keyword.search_keyword for user_keyword in user_keyword_list]  
+            enctext_list = [user_keyword.search_keyword for user_keyword in user_keyword_list] # 상위 3개의 객체에서 키워드만 추출
         else:
             db_keyword_list = SearchKeyword.objects.filter()[:3] # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
-            enctext_list = [db_keyword.keyword for db_keyword in db_keyword_list]
+            enctext_list = [db_keyword.keyword for db_keyword in db_keyword_list] # 상위 3개의 객체에서 키워드만 추출
         
         for service in self.algorithms_service_list: # 서비스별로 api 요청 호출
             for encText in enctext_list: # 키워드별로 api 요청 호출
-                search_data, getcode = self.naver_search_api(encText, service, number_response)
+                search_data, getcode = self.naver_search_api(encText, service, number_response) # 네이버 API 실행 함수에 위 인수를 넣어 실행 
                 if getcode:
-                    search_results_list[service] = search_data
+                    search_results_list[service] = search_data # 서비스을 키로 갖는 'API 응답 중 데이터'를 값으로 넣는다.
                 else:
                     search_results_list[service] = search_data # 에러 메세지가 포함됨
         
