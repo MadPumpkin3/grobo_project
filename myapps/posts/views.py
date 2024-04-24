@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.urls import resolve, reverse_lazy, reverse
 from django.views import generic, View
 
-from .models import Post, PostImage, PostComment, PreviewPost
+from .models import Post, PostImage, PostComment, PreviewPost, SearchKeyword
 from .naver_api import NaverSearchAPI, text_transform, TextKeywordReader, Keyword_save
 from myapps.users.models import UserSearchKeyword
 from myapps.feeds.models import HashTag
@@ -33,10 +33,7 @@ class PortalMainAPI(generic.TemplateView):
         login_button_text, login_button_url, login_yn = user_authenticated(self.request.user)
         
         keyword_match_post_format = GetPostMatchKeyword()
-        if login_yn:
-            post_list, result_text, result_bool = keyword_match_post_format.user_keyword_match_post(self.request.user)
-        else:
-            post_list, result_text, result_bool = keyword_match_post_format.total_keyword_match_post()
+        post_list, result_text, result_bool = keyword_match_post_format.user_keyword_match_post(self.request.user)
             
         context['login_button_text'] = login_button_text
         context['login_button_url'] = login_button_url
@@ -255,102 +252,50 @@ def data_thumbnail_extraction(search_results):
 # 키워드를 통해 post를 가져오는 클래스
 class GetPostMatchKeyword():
     
+    # 기본값으로 초기화
     def __init__(self):
-        self.data_detaile = {}
-        self.data_list = []
-        self.result_text = ""
-        self.result_bool = True
+        self.원본키워드리스트 = []
+        self.부분키워드리스트 = []
+        self.키워드리스트출처 = '' # 지정 단어 : Total, User, Mix
+        self.키워드초기갯수 = 10
+        self.키워드최대갯수 = 50
         
-        self.keyword_number = 10 # 사용하려는 키워드 수 ** 중요: 키워드의 갯수는 포스트의 갯수를 넘을 수 없음.
-        self.post_number = 3 # 호출하려는 총 포스트 수(키워드 1개당 1~2개 호출) 
-        # 포스트보다 키워드 수가 부족한 경우, 부족한 만큼 키워드 인덱스(오름차순)에 있는 포스트를 1번 더 호출(인덱스 계산을 위해 -1을 포함)
-        self.keyword_index = self.post_number - self.post_number - 1
+        self.반환포스트리스트 = []
+        self.정상반환여부 = True
+        self.반환텍스트 = ''
         
-    def user_keyword_match_post(self, user):
-        user_keyword_list = []
-        post_yn_bool = True
+    # 키워드 리스트 설정
+    def keyword_list_setting(self, user):
         
-        keyword_focus_line = 10
-        keyword_last_line = 20
-        
-        post_data_list = []
-        post_get_number = 3
-        
-        post_true_keyword = [] # 포스트가 있던 키워드일 경우, 해당 키워드를 저장
-        
-        post_true_keyword_index = 0
-        post_true_keyword_list = []
-        post_true_keyword_number = 2
-        
-        user_keywords = UserSearchKeyword.objects.filter(user = user)
-        
-        if user_keywords.exists():
-            user_keywords_number = len(user_keywords)
+        if user.is_authenticated and UserSearchKeyword.objects.filter(user=user).exists(): # 사용자가 로그인 상태이고, 해당 유저 키워드가 있으면 실행
+            self.원본키워드리스트 = UserSearchKeyword.objects.filter(user=user)
+            self.키워드리스트출처 = 'User'
             
-            if user_keywords_number < keyword_focus_line: # 해당 유저의 키워드가 '10'개 미만인 경우
-                keyword_focus_line = user_keywords_number # 최소 1개 이상, 최대 9개 이하
-
-            for focus_number in range(keyword_focus_line):
-                index, keyword = enumerate(user_keywords[focus_number])
-                tag_posts = Post.objects.filter(tag = keyword)
-                if tag_posts.exists():
-                    post = tag_posts[0]
-                    self.data_detaile = {
-                        'id': post.id,
-                        'title': post.title,
-                        'content': post.content,
-                    }
-                    post_data_list.append(self.data_detaile)
-                    post_true_keyword.append({index : len(tag_posts)}) # 포스트 있을 경우, 해당 키워드의 인덱스를 키로 하고 키워드 맞춤 포스트의 갯수를 값으로 한다.
-                
-                # 정상 성공 여부 판단
-                if len(post_data_list) == post_get_number: # 가져온 포스트 리스트 내 객체의 갯수와 찾으려는 포스트 갯수가 일치할 경우, 작업 성공으로 반복 중지
-                    break # for문 중지
-                
-                # 유저 포커스 키워드 위치 및 여부
-                elif index == keyword_focus_line - 1: # 지정된 갯수만큼 포스트를 가져오지 못했는데 초기 지정된 반복횟수가 끝난 경우
-                    if len(post_data_list) == 0: # 데이터가 없는 상태(즉, 포스터가 있는 키워드가 없는 경우)
-                        # 유저 키워드 갯수가 포커스 기준 선(갯수)보다 많고, 포커스 기준 선(갯수)가 최대 기준 선(갯수)보다 낮을 경우 (즉, 포커스가 50보다 낮거나 같은 경우)
-                        if user_keywords_number >= keyword_focus_line and keyword_focus_line <= keyword_last_line: 
-                            keyword_focus_line += 1 # 유저 키워드의 다음 인덱스를 읽기 위해 포커스 기준 선(갯수)를 1 높인다.
-                        else:
-                            self.data_list, self.result_text, self.result_bool = self.total_keyword_match_post()
-                    
-                    elif len(post_data_list) > 0:
-                        keyword = post_true_keyword[]
-                        for key, value in keyword:
-                            if value >= 2:
-                                keyword_focus_line
-                                
-                        
-                    
-            self.result_text = "사용자 맞춤 포스트입니다."
-            self.result_bool = True
-        
-        else:
-            self.data_list, self.result_text, self.result_bool = self.total_keyword_match_post()
+        elif SearchKeyword.objects.filter().exists(): # 사용자가 비로그인 상태이면, 전체 키워드가 있으면 실행
+            self.원본키워드리스트 = SearchKeyword.objects.filter()
+            self.키워드리스트출처 = 'Total'
             
-        return self.data_list, self.result_text, self.result_bool
+        else: # 로그인 유저도 아니고, 전체 키워드에도 키워드가 없으면 실행
+            self.반환포스트리스트 = [] # 빈 값으로 할당
+            self.정상반환여부 = False # 정상 반환 안됐음으로 할당
+            self.반환텍스트 = '키워드가 없어서 포스트 추천 불가'
+            최종반환데이터 = self.last_function(self.반환포스트리스트, self.정상반환여부, self.반환텍스트) # 추후 출력 함수에 해당 데이터 첨부하여 실행
+            return 최종반환데이터
+            
+        if len(self.원본키워드리스트) < self.키워드초기갯수: # 원본키워드 갯수가 키워드 초기 갯수(10개)보다 적을 경우
+            self.키워드초기갯수 = len(self.원본키워드리스트) # 키워드 초기 갯수를 원본 키워드 초기 갯수(9이하)로 설정
+            
+        최종반환데이터 = self.post_search_function(self.원본키워드리스트, self.키워드리스트출처, self.키워드초기갯수)
+        return 최종반환데이터
+    
+    
+    def post_search_function(self, 원본키워드리스트, 키워드리스트출처, 키워드초기갯수):
         
-
-    def total_keyword_match_post(self):
+        for index in range(키워드초기갯수):
+            pass
+    
+    
+        
+    # 반환 데이터 최종 처리 함수
+    def last_function(self, 반환포스트리스트, 정상반환여부, 반환텍스트):
         pass
-    
-    
-    def get_post(self):
-        pass
-    
-    
-
-user_keywords_number = 3 # 사용하려는 키워드 갯수
-user_keywords_line = 3 # 전체 키워드 갯수를 나누려는 수(키워드가 많을 경우 나눠서 상위 33%에 속하는 것만 진행)
-
-# 하루 구글 총 검색 횟수 : 12억
-# 지구 총 인구 : 77억
-# 지구 총 인구 / 구글 총 검색 횟수 = 6.41
-# 대략적으로 하루에 한 사람이 검색하는 횟수 = 7번
-# 한 문장에 들어가는 단어의 평균 갯수 : 10~20개 (평균 15개)
-# 7번 x 10개(최소) = 70개
-# 한 사람이 검색할 때 사용하는 하루 단어의 갯수 = 70개
-keyword_search_max_number = 70 # 알고리즘에 사용하려는 최대 키워드 갯수(유저 키워드가 이 수를 넘으면 > 전체 키워드 검색으로 넘어감.)
-keyword_search_min_number = 10 # 알고리즘에 사용하려는 최소 키워드 갯수(유저 키워드가 이 수를 넘으면 다음 10개의 키워드로 지정)
