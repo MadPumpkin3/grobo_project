@@ -14,6 +14,9 @@ from myapps.form.custom_form import validate_image
 
 from markdownx.utils import markdownify
 
+import time
+import asyncio
+
 # Create your views here.
 
 # 포털 사이트 메인 페이지를 로드하는 뷰(검색 키워드 상위 3개와 관련된 데이터륿 보여주는 알고리즘 포함)
@@ -254,48 +257,123 @@ class GetPostMatchKeyword():
     
     # 기본값으로 초기화
     def __init__(self):
-        self.원본키워드리스트 = []
-        self.부분키워드리스트 = []
+        self.키워드리스트 = []
+        self.키워드캐싱리스트 = [] # db내 키워드 인덱스가 변함에 따라 중복 키워드 확인을 방지하기 위해 50개의 키워드만 캐싱
         self.키워드리스트출처 = '' # 지정 단어 : Total, User, Mix
-        self.키워드초기갯수 = 10
-        self.키워드최대갯수 = 50
+        self.키워드반복횟수 = 10
+        self.키워드호출갯수 = 50
+        self.키워드10개이상있음 = True
+        
+        self.재사용키워드리스트 = []
         
         self.반환포스트리스트 = []
-        self.정상반환여부 = True
+        self.반환포스트갯수 = 3
+        self.포스트호출id = 1 # 해당 키워드를 가진 포스트 중 [1]번째 포스트 가져오기
+        self.실행완료여부 = False
         self.반환텍스트 = ''
         
     # 키워드 리스트 설정
-    def keyword_list_setting(self, user):
+    def 메인메서드(self, user):
         
+        # 유저 로그린 여부 따른 메서드 실행
         if user.is_authenticated and UserSearchKeyword.objects.filter(user=user).exists(): # 사용자가 로그인 상태이고, 해당 유저 키워드가 있으면 실행
-            self.원본키워드리스트 = UserSearchKeyword.objects.filter(user=user)
             self.키워드리스트출처 = 'User'
+            db_레코드_갯수 = UserSearchKeyword.objects.filter(user=user).count() # 메모리 절약을 위해 count로 레코드 갯수만 확인
+            if db_레코드_갯수 > self.키워드호출갯수:
+                self.키워드캐싱리스트 = list(UserSearchKeyword.objects.filter(user=user)[:self.키워드호출갯수])
+            else:
+                self.키워드캐싱리스트 = list(UserSearchKeyword.objects.filter(user=user))
             
         elif SearchKeyword.objects.filter().exists(): # 사용자가 비로그인 상태이면, 전체 키워드가 있으면 실행
-            self.원본키워드리스트 = SearchKeyword.objects.filter()
             self.키워드리스트출처 = 'Total'
+            self.전체키워드호출및저장_메서드()
             
         else: # 로그인 유저도 아니고, 전체 키워드에도 키워드가 없으면 실행
-            self.반환포스트리스트 = [] # 빈 값으로 할당
-            self.정상반환여부 = False # 정상 반환 안됐음으로 할당
-            self.반환텍스트 = '키워드가 없어서 포스트 추천 불가'
-            최종반환데이터 = self.last_function(self.반환포스트리스트, self.정상반환여부, self.반환텍스트) # 추후 출력 함수에 해당 데이터 첨부하여 실행
+            self.반환텍스트 = '추천 키워드 없음.'
+            최종반환데이터 = self.반환데이터정리() # 추후 출력 함수에 해당 데이터 첨부하여 실행
             return 최종반환데이터
+
+        self.키워드_맞춤_포스트_탐색_함수()
+        
+        while self.실행완료여부 == False:
+            time.sleep(2)
             
-        if len(self.원본키워드리스트) < self.키워드초기갯수: # 원본키워드 갯수가 키워드 초기 갯수(10개)보다 적을 경우
-            self.키워드초기갯수 = len(self.원본키워드리스트) # 키워드 초기 갯수를 원본 키워드 초기 갯수(9이하)로 설정
-            
-        최종반환데이터 = self.post_search_function(self.원본키워드리스트, self.키워드리스트출처, self.키워드초기갯수)
+        최종반환데이터 = self.반환데이터정리()
+        
         return 최종반환데이터
     
+    # 전체키워드 호출 코드의 재사용성을 위해 메서드로 제작
+    def 전체키워드호출및저장_메서드(self):
+        db_레코드_갯수 = SearchKeyword.objects.filter().count() # 메모리 절약을 위해 count로 레코드 갯수만 확인
+        if db_레코드_갯수 > self.키워드호출갯수:
+            self.키워드캐싱리스트 = list(SearchKeyword.objects.filter()[:self.키워드호출갯수])
+        else:
+            self.키워드캐싱리스트 = list(SearchKeyword.objects.filter())
     
-    def post_search_function(self, 원본키워드리스트, 키워드리스트출처, 키워드초기갯수):
+    # 키워드 맞춤 포스트 탐색 함수
+    def 키워드_맞춤_포스트_탐색_함수(self):
+        # 키워드 반복 횟수 지정
+        if len(self.키워드캐싱리스트) < self.키워드반복횟수: # 원본키워드 갯수가 키워드 초기 갯수(10개)보다 적을 경우
+            self.키워드리스트 = self.키워드캐싱리스트
+            self.키워드캐싱리스트.clear() # 요소를 삭제함으로써 메모리 확보하기 위해 캐싱 리스트 초기화
+            self.키워드반복횟수 = len(self.키워드캐싱리스트) # 키워드 초기 갯수를 원본 키워드 초기 갯수(9이하)로 설정
+            # self.키워드호출갯수 = len(self.키워드리스트) # 키워드 초기 호출 갯수를 원본 키워드 초기 갯수(9이하)로 설정
+            self.키워드10개이상있음 = False
+        else: # 키워드 갯수가 10개 이상인 경우
+            self.키워드리스트 = self.키워드캐싱리스트[:self.키워드반복횟수] # 키워드 반복 횟수만큼만 호출
         
-        for index in range(키워드초기갯수):
-            pass
+        # 키워드 맞춤 포스트 조사 실행
+        for 키워드선택번호 in range(self.키워드반복횟수): # 키워드 리스트의 초기 갯수대로 반복
+            키워드 = self.키워드리스트[키워드선택번호]
+            포스트 = Post.objects.filter(tag = 키워드)[self.포스트호출id]
+            if 포스트:
+                self.반환포스트리스트.append(포스트)
+                self.재사용키워드리스트.append(키워드)
+            
+            # 목표 포스트 수량 확인
+            if len(self.반환포스트리스트) == self.반환포스트갯수:
+                self.실행_결과_검증_메서드(True)
+            
+        if len(self.반환포스트리스트) < self.반환포스트갯수:
+            self.실행_결과_검증_메서드(False)
     
-    
+    # 실행 결과 검증 메서드
+    def 실행_결과_검증_메서드(self, 실행결과):
         
-    # 반환 데이터 최종 처리 함수
-    def last_function(self, 반환포스트리스트, 정상반환여부, 반환텍스트):
+        # 실행결과가 True면 위 while문 탈출을 위해 True로 변경
+        if 실행결과:
+            self.실행완료여부 = True
+        
+        else:
+            # 재사용 키워드 리스트에 키워드 존재 시, 설정 변경하여 재실행
+            if self.재사용키워드리스트:
+                self.포스트호출id += 1 # 해당 키워드의 다음번째 포스트 호출
+                self.키워드리스트 = self.재사용키워드리스트 # 재사용키워드로 대체
+                self.재사용키워드리스트 = [] # 재사용키워드리스트 초기화
+                self.키워드_맞춤_포스트_탐색_함수()
+            
+            if self.키워드10개이상있음:
+                del self.키워드캐싱리스트[:self.키워드반복횟수]
+                self.키워드_맞춤_포스트_탐색_함수()
+                
+            else:
+                if self.반환포스트리스트:
+                    if self.키워드리스트출처 == 'User':
+                        self.키워드리스트출처 = 'Mix'
+                        self.전체키워드호출및저장_메서드()
+                        self.키워드_맞춤_포스트_탐색_함수()
+                    else:
+                        self.반환텍스트 = '추천 가능한 포스트가 더 이상 없음'
+                        self.실행완료여부 = True
+                
+                else:
+                    if self.키워드리스트출처 == 'User':
+                        self.키워드리스트출처 = 'Total'
+                        self.전체키워드호출및저장_메서드()
+                        self.키워드_맞춤_포스트_탐색_함수()
+                    else:
+                        self.반환텍스트 = '추천 가능한 포스트가 없음'
+                        self.실행완료여부 = True
+    
+    def 반환데이터정리(self):
         pass
