@@ -1,20 +1,18 @@
 import json
+import asyncio
 import aiohttp
-import logging
 from asgiref.sync import sync_to_async
+import urllib.request
 from urllib.parse import quote
 from konlpy.tag import Kkma # 한국어 형태소 라이브러리로 단어와 품사로 구분하여 반환하기 위해 호출
 from nltk.tokenize import word_tokenize # 영어 형태소 라이브러리로 영어를 토큰화 하기 위해 호출
 from nltk.tag import pos_tag # 영어 형태소 라이브러리로 단어와 품사로 구분하여 반환하기 위해 호출
+from django.views import generic
 from django.utils import timezone
 from myapps.posts.models import SearchKeyword
 from myapps.users.models import UserSearchKeyword, User
 
-# 로깅 설정
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
-# 사용자 또는 인기 키워드 관련 네이버 정보 추천(네이버 API) 모듈
+# 네이버 api 실행 클래스
 class NaverSearchAPI():
     
     def __init__(self):
@@ -25,63 +23,6 @@ class NaverSearchAPI():
         self.algorithms_service_list = ["news", "shop", "blog"] # 알고리즘 결과 요청하려는 서비스
         self.algorithms_number_responses = 1 # 알고리즘 데이터의 서비스별 갯수
         
-    # 비동기적 기능 코드(ChatGPT 조언에 따라 작성)
-    # 네이버 api 서버에 요청을 보내는 메서드(응답은 JSON 문자열로 오기 때문에 python객체로 변환이 필요하다.)
-    async def naver_search_api(self, encText, service, number_responses):
-        url = f"https://openapi.naver.com/v1/search/{service}?query=" + encText # JSON 결과
-        headers = {
-            "X-Naver-Client-Id": self.client_id,
-            "X-Naver-Client-Secret": self.client_secret,
-        }
-        
-        async with aiohttp.ClientSession() as session: # 비동기 HTTP 요청을 처리
-            async with session.get(url, headers = headers) as response:
-                rescode = response.status
-                if rescode==200:
-                    response_body = await response.text() # 비동기적으로 응답 본문을 읽기
-                    response_data = json.loads(response_body) # JSON 문자열을 파이썬 객체로 변환
-                    search_data = response_data['items'][0:number_responses] # 'items'의 키의 값 중 일부를 가져온다.
-                    return search_data, True
-                else:
-                    error_code = "Error Code:" + str(rescode)
-                    return error_code, False
-        
-    # 사용자 키워드 알고리즘 메서드(사용자가 자주 쓰는 키워드로 뉴스 및 쇼핑 검색 api 요청)
-    async def algorithms_api_request(self, user, login_yn):
-        number_response = self.algorithms_number_responses
-        search_results_list = {} # 반환할 딕셔너리 변수 초기화
-        enctext_list = []
-        
-        try:
-            # 사용자 로그인 여부에 따라 키워드 추출 모델 변경
-            if login_yn:
-                user_keyword_list = await sync_to_async(list)(UserSearchKeyword.objects.filter(user = user)[:3]) # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
-                
-                for user_keyword in user_keyword_list:
-                    manager = user_keyword.search_keyword
-                    
-                    related_keywords = await sync_to_async(list)(manager.all())
-                
-                    enctext_list.extend([keyword.keyword for keyword in related_keywords])
-            else:
-                db_keyword_list = await sync_to_async(list)(SearchKeyword.objects.all()[:3]) # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
-                
-                for db_keyword in db_keyword_list:
-                    enctext_list.append(db_keyword.keyword)
-                
-        except Exception as e:
-            logger.error('데이터를 가져오는 동안 오류 발생: %s', e)
-        
-        for service in self.algorithms_service_list: # 서비스별로 api 요청 호출
-            for encText in enctext_list: # 키워드별로 api 요청 호출
-                search_data, getcode = await self.naver_search_api(encText, service, number_response) # 네이버 API 실행 함수에 위 인수를 넣어 실행 
-                if getcode:
-                    search_results_list[service] = search_data # 서비스을 키로 갖는 'API 응답 중 데이터'를 값으로 넣는다.
-                else:
-                    search_results_list[service] = search_data # 에러 메세지가 포함됨
-        
-        return search_results_list # 서비스명(key)에 따라 반환된 API 결과 값(value)을 갖는 '중첩된 딕셔너리와 리스트' 변수를 반환
-    
     # 검색 실행 시, 검색 api를 요청하는 메서드
     async def search_api_request(self, transformed_text):
         encText = quote(transformed_text) # 네이버 API url로 전송을 위해 텍스트를 인코딩
@@ -95,8 +36,52 @@ class NaverSearchAPI():
             else:
                 search_results_list[service] = search_data # 에러 메세지가 포함됨.
         
-        return search_results_list # 서비스명(key)에 따라 반환된 API 결과 값(value)을 갖는 '중첩된 딕셔너리와 리스트' 변수를 반환        
-
+        return search_results_list # 서비스명(key)에 따라 반환된 API 결과 값(value)을 갖는 '중첩된 딕셔너리와 리스트' 변수를 반환
+        
+    # 동기적 기능 코드
+    # 네이버 api 서버에 요청을 보내는 메서드(응답은 JSON 문자열로 오기 때문에 python객체로 변환이 필요하다.)
+    async def naver_search_api(self, encText, service, number_responses):
+        url = f"https://openapi.naver.com/v1/search/{service}?query=" + encText # JSON 결과
+        # url = "https://openapi.naver.com/v1/search/blog.xml?query=" + encText # XML 결과
+        request = urllib.request.Request(url)
+        request.add_header("X-Naver-Client-Id",self.client_id)
+        request.add_header("X-Naver-Client-Secret",self.client_secret)
+        response = urllib.request.urlopen(request) # urllib.request : 동기 API 요청 코드
+        rescode = response.getcode() # getcode()메서드 : HTTP 응답 코드를 반환한다. (성공적이면 200 반환, 실패하면 오류 코드 반환)
+        if(rescode==200):
+            # .read()메서드 : HTTP응답의 본문을 읽어들이는 메서드
+            # .decode()메서드 : naver_api는 응답이 바이트 형식으로 오는데 그것을 유니코드 문자열로 디코딩하기 위해서 사용
+            response_body = response.read().decode('utf-8')
+            response_data = json.loads(response_body) # JSON 문자열을 파이썬 객체로 변환
+            search_data = response_data['items'][0:number_responses] # 'items'의 키의 값 중 일부를 가져온다.
+            return search_data, True
+        else:
+            error_code = "Error Code:" + rescode
+            return error_code, False
+        
+    # 사용자 키워드 알고리즘 메서드(사용자가 자주 쓰는 키워드로 뉴스 및 쇼핑 검색 api 요청)
+    async def algorithms_api_request(self, user):
+        number_response = self.algorithms_number_responses
+        search_results_list = {} # 반환할 딕셔너리 변수 초기화
+        
+        # 사용자 로그인 여부에 따라 키워드 추출 모델 변경
+        if user.is_authenticated:
+            user_keyword_list = UserSearchKeyword.objects.filter(user = user)[:3] # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
+            enctext_list = [user_keyword.search_keyword for user_keyword in user_keyword_list] # 상위 3개의 객체에서 키워드만 추출
+        else:
+            db_keyword_list = SearchKeyword.objects.filter()[:3] # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
+            enctext_list = [db_keyword.keyword for db_keyword in db_keyword_list] # 상위 3개의 객체에서 키워드만 추출
+        
+        for service in self.algorithms_service_list: # 서비스별로 api 요청 호출
+            for encText in enctext_list: # 키워드별로 api 요청 호출
+                search_data, getcode = await self.naver_search_api(encText, service, number_response) # 네이버 API 실행 함수에 위 인수를 넣어 실행 
+                if getcode:
+                    search_results_list[service] = search_data # 서비스을 키로 갖는 'API 응답 중 데이터'를 값으로 넣는다.
+                else:
+                    search_results_list[service] = search_data # 에러 메세지가 포함됨
+        
+        return search_results_list # 서비스명(key)에 따라 반환된 API 결과 값(value)을 갖는 '중첩된 딕셔너리와 리스트' 변수를 반환
+        
 # 텍스트를 API url 텍스트로 변환하는 함수(공백을 '+'로 변경)
 def text_transform(text):
     text_strip = text.strip() # 문장 양쪽 끝 공백 제거

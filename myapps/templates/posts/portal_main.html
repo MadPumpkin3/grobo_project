@@ -1,5 +1,6 @@
 {% extends 'base/portal_nav.html' %}
 {% load static %}
+{% load posts_filters %}
 
 {% block content %}
     <!-- 탑 영역 -->
@@ -18,15 +19,61 @@
         {{ text }}
         <!-- 포털 뉴스 영역 -->
         <div id="portal_news" class="portal-news">
-            <p>포털 뉴스</p>
+            <p>추천 뉴스</p>
+            {% for news_data in news_data_list %}
+                <article id="news-data-{{ forloop.counter }}" class="news-data">
+                    <a href="{{ news_data.link }}">
+                        <h2 class="news-data-title">{{ news_data.title | formatted_markdown }}</h2>
+                        <p class="news-data-description">{{ news_data.description | formatted_markdown }}</p>
+                        {% if news_data.image %}
+                            <img src="{{ news_data.image }}" alt="{{ news_data.title }}-썸네일">
+                        {% endif %}
+                    </a>
+                </article>
+            {% endfor %}
         </div>
         <!-- 포털 광고 영역 -->
-        <div id="portal_ad" class="portal-ad">
-            <p>포털 광고</p>
+        <div id="portal_shop" class="portal-shop">
+            <p>추천 쇼핑</p>
+            {% for shop_data in shop_data_list %}
+                <article id="shop-data-{{ forloop.counter }}" class="shop-data">
+                    <a href="{{ shop_data.link }}">
+                        <h2 class="shop-data-title">{{ shop_data.title | formatted_markdown }}</h2>
+                        <p class="shop-data-lprice">최저가: {{ shop_data.lprice }}</p>
+                        <p class="shop-data-hprice">최고가: {{ shop_data.hprice }}</p>
+                        <p class="shop-data-hprice">판매처: {{ shop_data.mallName }}</p>
+                        {% if shop_data.image %}
+                            <img src="{{ shop_data.image }}" alt="{{ shop_data.title }}-썸네일">
+                        {% endif %}
+                    </a>
+                </article>
+            {% endfor %}
+        </div>
+        <div id="portal_blog" class="portal-blog">
+            <p>추천 블로그</p>
+            {% for blog_data in blog_data_list %}
+                <article id="blog-data-{{ forloop.counter }}" class="blog-data">
+                    <a href="{{ blog_data.link }}">
+                        <h2 class="blog-data-title">{{ blog_data.title | formatted_markdown }}</h2>
+                        <p class="blog-data-description">{{ blog_data.description | formatted_markdown }}</p>
+                        <p class="blog-data-postdate">{{ blog_data.postdate }}</p>
+                        {% if blog_data.image %}
+                            <img src="{{ blog_data.image }}" alt="{{ blog_data.title }}-썸네일">
+                        {% endif %}
+                    </a>
+                </article>
+            {% endfor %}
         </div>
         <!-- 포스트 리스트 영역 -->
         <div id="portal_post_list" class="portal-post-list">
-            <p>포스트 리스트</p>
+            <p>추천 포스트</p>
+            {% if post_list %}
+                {% for post in post_list %}
+                    <article id="post-data-{{ forloop.counter }}" class="post-data">
+                    </article>
+                {% endfor %}
+            {% endif %}
+            <h3 id="post-data-text" class="post_data_text">{{ result_text }}</h3>
         </div>
     </div>
     <!-- 사이드 영역(오른쪽) -->

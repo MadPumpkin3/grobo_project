@@ -1,20 +1,18 @@
 import json
+import asyncio
 import aiohttp
-import logging
 from asgiref.sync import sync_to_async
+import urllib.request
 from urllib.parse import quote
 from konlpy.tag import Kkma # 한국어 형태소 라이브러리로 단어와 품사로 구분하여 반환하기 위해 호출
 from nltk.tokenize import word_tokenize # 영어 형태소 라이브러리로 영어를 토큰화 하기 위해 호출
 from nltk.tag import pos_tag # 영어 형태소 라이브러리로 단어와 품사로 구분하여 반환하기 위해 호출
+from django.views import generic
 from django.utils import timezone
 from myapps.posts.models import SearchKeyword
 from myapps.users.models import UserSearchKeyword, User
 
-# 로깅 설정
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
-# 사용자 또는 인기 키워드 관련 네이버 정보 추천(네이버 API) 모듈
+# 네이버 api 실행 클래스
 class NaverSearchAPI():
     
     def __init__(self):
@@ -30,8 +28,8 @@ class NaverSearchAPI():
     async def naver_search_api(self, encText, service, number_responses):
         url = f"https://openapi.naver.com/v1/search/{service}?query=" + encText # JSON 결과
         headers = {
-            "X-Naver-Client-Id": self.client_id,
-            "X-Naver-Client-Secret": self.client_secret,
+            "X-Naver-Client-Id",self.client_id,
+            "X-Naver-Client-Secret",self.client_secret,
         }
         
         async with aiohttp.ClientSession() as session: # 비동기 HTTP 요청을 처리
@@ -50,27 +48,16 @@ class NaverSearchAPI():
     async def algorithms_api_request(self, user, login_yn):
         number_response = self.algorithms_number_responses
         search_results_list = {} # 반환할 딕셔너리 변수 초기화
-        enctext_list = []
         
-        try:
-            # 사용자 로그인 여부에 따라 키워드 추출 모델 변경
-            if login_yn:
-                user_keyword_list = await sync_to_async(list)(UserSearchKeyword.objects.filter(user = user)[:3]) # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
-                
-                for user_keyword in user_keyword_list:
-                    manager = user_keyword.search_keyword
-                    
-                    related_keywords = await sync_to_async(list)(manager.all())
-                
-                    enctext_list.extend([keyword.keyword for keyword in related_keywords])
-            else:
-                db_keyword_list = await sync_to_async(list)(SearchKeyword.objects.all()[:3]) # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
-                
-                for db_keyword in db_keyword_list:
-                    enctext_list.append(db_keyword.keyword)
-                
-        except Exception as e:
-            logger.error('데이터를 가져오는 동안 오류 발생: %s', e)
+        # 사용자 로그인 여부에 따라 키워드 추출 모델 변경
+        if login_yn:
+            user_keyword_list = UserSearchKeyword.objects.filter(user = user)[:3] # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
+            enctext_list = [user_keyword.search_keyword for user_keyword in user_keyword_list] # 상위 3개의 객체에서 키워드만 추출
+        else:
+            db_keyword_list = SearchKeyword.objects.all()[:3] # 모델에 내림차순으로 설정되어 있어서 상위 3개만 가져오면 됨.
+            enctext_list = [db_keyword.keyword for db_keyword in db_keyword_list] # 상위 3개의 객체에서 키워드만 추출
+            
+        print('디버그용 출력', enctext_list)
         
         for service in self.algorithms_service_list: # 서비스별로 api 요청 호출
             for encText in enctext_list: # 키워드별로 api 요청 호출
@@ -95,8 +82,8 @@ class NaverSearchAPI():
             else:
                 search_results_list[service] = search_data # 에러 메세지가 포함됨.
         
-        return search_results_list # 서비스명(key)에 따라 반환된 API 결과 값(value)을 갖는 '중첩된 딕셔너리와 리스트' 변수를 반환        
-
+        return search_results_list # 서비스명(key)에 따라 반환된 API 결과 값(value)을 갖는 '중첩된 딕셔너리와 리스트' 변수를 반환
+        
 # 텍스트를 API url 텍스트로 변환하는 함수(공백을 '+'로 변경)
 def text_transform(text):
     text_strip = text.strip() # 문장 양쪽 끝 공백 제거

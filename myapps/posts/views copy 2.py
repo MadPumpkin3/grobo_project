@@ -14,85 +14,66 @@ from myapps.form.custom_form import validate_image
 
 from markdownx.utils import markdownify
 
-import logging
-
-# 비동기 기능 구현을 위한 관련 라이브러리 호출
+import time
 import asyncio
-from asgiref.sync import sync_to_async
 
 # Create your views here.
 
-# 로깅 설정
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
-# 비동기 뷰 사용을 위한 뷰(사용 안함)
-# class AsyncView(View):
-#     template_name = None
-    
-#     async def get_context_data(self, **kwargs):
-#         return {}
-    
-#     async def get(self, request, *args, **kwargs):
-#         context = await self.get_context_data(**kwargs)
-#         return await sync_to_async(render)(request, self.template_name, context)
-
 # 포털 사이트 메인 페이지를 로드하는 뷰(검색 키워드 상위 3개와 관련된 데이터륿 보여주는 알고리즘 포함)
-class PortalMainAPI(generic.base.TemplateResponseMixin, generic.base.View):
+class PortalMainAPI(View):
     template_name = 'posts/portal_main.html'
     
-    async def get_context_data(self, **kwargs):
-        # 부모 클래스인 'TemplateView'에 내장되어 있고 템플릿에 데이터를 담당하는 'get_context_data()'메서드를 호출하여 데이터를 추가
-        # context = await sync_to_async(super().get_context_data)(**kwargs)
-        context = {}
+    async def get(self, request, *args, **kwargs):
+        context = await self.get_context_data()
         
-        # 동기 함수나 메서드를 비동기 뷰에서 호출할 때는 'Sync_to_async'로 감싸줘야 한다.
-        login_button_text, login_button_url, login_yn = await sync_to_async(user_authenticated)(self.request.user)
-        context['login_button_text'] = login_button_text
-        context['login_button_url'] = login_button_url
-        context['text'] = "환영합니다. 포털 메인 페이지입니다."
+        return JsonResponse(context)
+    
+    async def get_context_data(self):
+        # 부모 클래스인 'TemplateView'에 내장되어 있고 템플릿에 데이터를 담당하는 'get_context_data()'메서드를 호출하여 데이터를 추가
+        context = {}
         
         # 네이버 API도 비동기도 만들까? url 호출 중에 다른 작업 가능하게?
         algorithms_api_format = NaverSearchAPI()
-        algorithms_data_list = await algorithms_api_format.algorithms_api_request(self.request.user, login_yn)
+        algorithms_data_list = await algorithms_api_format.algorithms_api_request(self.request.user)
         context['news_data_list'] = algorithms_data_list['news']
         context['shop_data_list'] = algorithms_data_list['shop']
         context['blog_data_list'] = algorithms_data_list['blog']
         
+        login_button_text, login_button_url, login_yn = user_authenticated(self.request.user)
+        
         # 사용자 맞춤 포스트 호출을 위한 비동기 작업 실행을 위해 'asyncio.run'으로 해당 기능 클래스 및 메서드 실행
         keyword_match_post_format = GetPostMatchKeyword()
         # 키워드 맞춤 포스트 탐색을 위해 비동기 방식으로 메서드 호출
-        post_list, result_text, result_bool = await keyword_match_post_format.get_post_match_keyword(self.request.user, login_yn)
+        post_list, result_text, result_bool = await keyword_match_post_format.메인메서드(self.request.user)
         context['post_list'] = post_list
         context['result_text'] = result_text
             
+        context['login_button_text'] = login_button_text
+        context['login_button_url'] = login_button_url
+        context['text'] = "환영합니다. 포털 메인 페이지입니다."
         return context
-    
-    async def get(self, request, *args, **kwargs):
-        context = await self.get_context_data(**kwargs)
-        return self.render_to_response(context)
 
-# 포털 검색 결과 페이지(api 사용 가속화를 위해 '비동기'로 작업)
-class PortalSearchResults(generic.base.TemplateResponseMixin, generic.base.View):
+# 포털 검색 결과 페이지
+class PortalSearchResults(generic.TemplateView):
     template_name = 'posts/portal_search_results.html'
     
     # 검색어 처리 진행
-    async def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs):
         # 부모 클래스인 'TemplateView'에 내장되어 있고 템플릿에 데이터를 담당하는 'get_context_data()'메서드를 호출하여 데이터를 추가
-        context = {}
+        context = super().get_context_data(**kwargs)
         
         text = self.request.GET.get('portal_search_text', '') # 검색 창에 입력된 텍스트 데이터를 가져와서 할당
         
         text_reader_format = TextKeywordReader(text) # TextKeywordReader 클래스의 포맷 인스턴스 생성
-        keyword_list = await sync_to_async(text_reader_format.text_keyword_reader)() # 텍스트에서 키워드를 추출하는 전처리 메서드 실행하고, 결과를 keyword_list를 변수에 할당
+        keyword_list = text_reader_format.text_keyword_reader() # 텍스트에서 키워드를 추출하는 전처리 메서드 실행하고, 결과를 keyword_list를 변수에 할당
         
         keyword_save_format = Keyword_save(self.request.user, keyword_list) # Keyword_save 클래스의 포맷 인스턴스 생성
-        await sync_to_async(keyword_save_format.keyword_save)() # keyword를 저장하는 메서드 실행
+        keyword_save_format.keyword_save() # keyword를 저장하는 메서드 실행
         
         # transformed_text = text_transform(text) # API url용 문자열로 변환(공백을 '+'로 변환)
         
         search_api_format = NaverSearchAPI()
-        search_results = await search_api_format.search_api_request(text)
+        search_results = search_api_format.search_api_request(text)
         
         # news_results = data_thumbnail_extraction(search_results['news']) # 뉴스 데이터만 추출
         # webkr_results = data_thumbnail_extraction(search_results['webkr']) # 웹문서 데이터만 추출
@@ -102,16 +83,12 @@ class PortalSearchResults(generic.base.TemplateResponseMixin, generic.base.View)
         context['encyc_data_list'] = search_results['encyc']
         
         # 직접 만든 '유저 로그인 여부에 따라 버튼명과 연결 주소 그리고 로그인 여부'를 반환하는 함수
-        login_button_text, login_button_url, login_yn = await sync_to_async(user_authenticated)(self.request.user)
+        login_button_text, login_button_url, login_yn = user_authenticated(self.request.user)
         context['login_button_text'] = login_button_text # nav태그에 들어가는 요소(로그인 여부에 따른 동적 버튼)
         context['login_button_url'] = login_button_url # nav태그에 들어가는 요소(로그인 여부에 따른 동적 버튼)
         context['text'] = '환영합니다. 포털 검색 결과 페이지입니다.'
         
         return context
-    
-    async def get(self, request, *args, **kwargs):
-        context = await self.get_context_data(**kwargs)
-        return self.render_to_response(context)
 
 # 포스트 디테일 페이지 보여주는 뷰
 class PostDetailView(generic.DetailView):
@@ -285,156 +262,138 @@ def preview_post_delete(user):
 def data_thumbnail_extraction(search_results):
     pass
 
-# 사용자 또는 인기 키워드로 맞춤 포스트를 추천하는 모듈
+# 키워드를 통해 post를 가져오는 클래스
 class GetPostMatchKeyword():
     
     # 기본값으로 초기화
     def __init__(self):
-        self.keyword_list = [] # 키워드 리스트: 반복 메서드에 사용되는 메인 리스트
-        self.db_keyword_list = [] # DB 키워드 리스트: DB에 있는 키워드 중 일부만 키워드 리스트에 옮겨 사용하기 위한 임시 저장 리스트
-        self.keyword_source = '' # 키워드의 실시간 출처 확인용(Total, User, Mix)
-        self.keyword_search_number = 10 # 반복 메서드의 메인 반복 횟수(키워드 리스트 길이에 따라 변환)
-        self.keyword_delete_number = 10 # db_keyword_list에 탐색 완료한 키워드 10개 삭제
-        self.db_keyword_number = 50 # DB에서 키워드를 불러오는 최대 갯수(메모리 절약을 위해 최대 50개로 제한)
-        self.keyword_number_more_10 = True # 추가 탐색이 가능한 키워드 존재 여부 확인용: DB 키워드 리스트 갯수에 따라 변환
+        self.키워드리스트 = []
+        self.키워드캐싱리스트 = [] # db내 키워드 인덱스가 변함에 따라 중복 키워드 확인을 방지하기 위해 50개의 키워드만 캐싱
+        self.키워드리스트출처 = '' # 지정 단어 : Total, User, Mix
+        self.키워드반복횟수 = 10
+        self.키워드사용갯수 = 10
+        self.키워드호출갯수 = 50
+        self.키워드10개이상있음 = True
         
-        self.reuse_keyword_list = [] # 재사용 가능 키워드 리스트: 포스트가 존재하는 키워드를 임시 저장하는 리스트
+        self.재사용키워드리스트 = []
         
-        self.post_list = [] # 추출한 포스트를 가지고 있는 리스트(최종 반환 리스트)
-        self.post_number = 3 # 추출하려는 포스트 갯수
-        self.post_search_id = 1 # DB에서 가져오려는 포스트 id(재사용 키워드로 포스트 재탐색 시, +1한 id 값을 가진 포스트 가져오기)
-        self.completion_status = False # 비동기 작업들의 완료를 실시간으로 확인하는 변수
-        self.return_text = ''
+        self.반환포스트리스트 = []
+        self.반환포스트갯수 = 3
+        self.포스트호출id = 1 # 해당 키워드를 가진 포스트 중 [1]번째 포스트 가져오기
+        self.실행완료여부 = False
+        self.반환텍스트 = ''
     
-    # 공유키워드(개인 키워드x) 호출 및 처리를 위한 메서드
-    async def shared_keyword_get_save(self):
-        keyword_number = await sync_to_async(SearchKeyword.objects.count)() # 메모리 절약을 위해 count로 레코드 갯수만 확인
-        if keyword_number > self.db_keyword_number:
-            db_keyword_list = await sync_to_async(list)(SearchKeyword.objects.all()[:self.db_keyword_number])
-            for db_keyword in db_keyword_list:
-                    self.db_keyword_list.append(db_keyword.keyword)
+    # 전체키워드 호출 코드의 재사용성을 위해 메서드로 제작
+    def 전체키워드호출및저장_메서드(self):
+        db_레코드_갯수 = SearchKeyword.objects.filter().count() # 메모리 절약을 위해 count로 레코드 갯수만 확인
+        if db_레코드_갯수 > self.키워드호출갯수:
+            self.키워드캐싱리스트 = list(SearchKeyword.objects.filter()[:self.키워드호출갯수])
         else:
-            db_keyword_list = await sync_to_async(list)(SearchKeyword.objects.all())
-            for db_keyword in db_keyword_list:
-                    self.db_keyword_list.append(db_keyword.keyword)
+            self.키워드캐싱리스트 = list(SearchKeyword.objects.filter())
     
-    # 클래스 변수 수정을 위한 메서드
-    def modify_class_variables(self):
+    def 키워드리스트_선행_작업_메서드(self):
         # 키워드 반복 횟수 지정
-        if len(self.db_keyword_list) < self.keyword_search_number: # 원본키워드 갯수가 키워드 초기 갯수(10개)보다 적을 경우
-            self.keyword_list.extend(self.db_keyword_list)
-            # logger.debug('키워드 리스트 데이터 확인: %s', self.keyword_list)
-            self.keyword_search_number = len(self.db_keyword_list) # 키워드 초기 갯수를 원본 키워드 초기 갯수(9이하)로 설정
+        if len(self.키워드캐싱리스트) < self.키워드반복횟수: # 원본키워드 갯수가 키워드 초기 갯수(10개)보다 적을 경우
+            self.키워드리스트 = self.키워드캐싱리스트
+            self.키워드반복횟수 = len(self.키워드캐싱리스트) # 키워드 초기 갯수를 원본 키워드 초기 갯수(9이하)로 설정
             # self.키워드호출갯수 = len(self.키워드리스트) # 키워드 초기 호출 갯수를 원본 키워드 초기 갯수(9이하)로 설정
-            # logger.debug('키워드 리스트 갯수 확인: %s', len(self.keyword_list))
-            self.keyword_number_more_10 = False
-            self.db_keyword_list.clear() # 요소를 삭제함으로써 메모리 확보하기 위해 캐싱 리스트 초기화
+            self.키워드10개이상있음 = False
+            self.키워드캐싱리스트.clear() # 요소를 삭제함으로써 메모리 확보하기 위해 캐싱 리스트 초기화
         else: # 키워드 갯수가 10개 이상인 경우
-            self.keyword_list = self.db_keyword_list[:self.keyword_search_number] # 키워드 반복 횟수만큼만 호출
+            self.키워드리스트 = self.키워드캐싱리스트[:self.키워드반복횟수] # 키워드 반복 횟수만큼만 호출
     
-    # 키워드 맞춤 포스트 탐색 메서드
-    async def post_search(self):
+    # 키워드 맞춤 포스트 탐색 함수
+    async def 키워드_맞춤_포스트_탐색_함수(self):
         # 키워드 맞춤 포스트 조사 실행
-        for index in range(self.keyword_search_number): # 키워드 리스트의 초기 갯수대로 반복
-            keyword = self.keyword_list[index]
-            post = await sync_to_async(Post.objects.filter(tag__tag_name=keyword, id = self.post_search_id).exists)()
-            logger.debug('keyword 내용 확인: %s', keyword)
-            logger.debug('post 내용 확인: %s', post)
-            
-            if post:
-                post = await sync_to_async(Post.objects.get)(tag__tag_name=keyword, id = self.post_search_id)
-                self.post_list.append(post)
-                logger.debug('post_list 내용 확인: %s', self.post_list)
-                if self.post_search_id == 1:
-                    self.reuse_keyword_list.append(keyword)
+        for 키워드선택번호 in range(self.키워드반복횟수): # 키워드 리스트의 초기 갯수대로 반복
+            키워드 = self.키워드리스트[키워드선택번호]
+            포스트 = Post.objects.filter(tag = 키워드)[self.포스트호출id]
+            if 포스트:
+                self.반환포스트리스트.append(포스트)
+                if self.포스트호출id > 1:
+                    self.재사용키워드리스트.append(키워드)
             
             # 목표 포스트 수량 확인 후, 달성하면 위 while문 정지를 위해 True로 변환 뒤 반복 중단
-            if len(self.post_list) == self.post_number:
-                self.return_text = '맞춤형 포스트 추천'
-                self.completion_status = True
+            if len(self.반환포스트리스트) == self.반환포스트갯수:
+                self.반환텍스트 = '맞춤형 포스트 추천'
+                self.실행완료여부 = True
                 break
             
-        if len(self.post_list) < self.post_number:
-            await self.branch_processing()
+        if len(self.반환포스트리스트) < self.반환포스트갯수:
+            await self.세부_검증_메서드()
     
-    # 실행 결과에 따른 조건부 분기 처리 메서드
-    async def branch_processing(self):
-        # 재사용 키워드 리스트에 키워드 존재 시, 설정 변경하여 재실행
-        if self.reuse_keyword_list:
-            self.post_search_id += 1 # 해당 키워드의 다음번째 포스트 호출
-            self.keyword_list = self.reuse_keyword_list # 재사용키워드로 대체
-            self.keyword_search_number = len(self.reuse_keyword_list)
-            self.reuse_keyword_list = [] # 재사용키워드리스트 초기화
-            await self.post_search()
+    # 실행 결과 검증 메서드
+    async def 세부_검증_메서드(self):
         
-        # 추가 호출 가능한 키워드가 있을 경우
-        elif self.keyword_number_more_10:
-            self.post_search_id = 1
-            del self.db_keyword_list[:self.keyword_delete_number]
-            await sync_to_async(self.modify_class_variables)()
-            await self.post_search()
+        # 재사용 키워드 리스트에 키워드 존재 시, 설정 변경하여 재실행
+        if self.재사용키워드리스트:
+            self.포스트호출id += 1 # 해당 키워드의 다음번째 포스트 호출
+            self.키워드리스트 = self.재사용키워드리스트 # 재사용키워드로 대체
+            self.키워드반복횟수 = len(self.재사용키워드리스트)
+            self.재사용키워드리스트 = [] # 재사용키워드리스트 초기화
+            await self.키워드_맞춤_포스트_탐색_함수()
+        
+        elif self.키워드10개이상있음:
+            self.포스트호출id = 0
+            del self.키워드캐싱리스트[:self.키워드반복횟수]
+            self.키워드리스트_선행_작업_메서드()
+            await self.키워드_맞춤_포스트_탐색_함수()
             
         else: # 재사용 가능한 키워드도 없고, 추가 호출 가능한 키워드도 없을 경우         
-            if self.keyword_source == 'User':
-                if self.post_list:
-                    self.keyword_source = 'Mix'
+            if self.키워드리스트출처 == 'User':
+                if self.반환포스트리스트:
+                    self.키워드리스트출처 = 'Mix'
                 else:
-                    self.keyword_source = 'Total'
+                    self.키워드리스트출처 = 'Total'
                 
-                self.post_search_id = 1
-                await self.shared_keyword_get_save()
-                await sync_to_async(self.modify_class_variables)()
-                await self.post_search()
+                self.포스트호출id = 0
+                self.전체키워드호출및저장_메서드()
+                self.키워드리스트_선행_작업_메서드()
+                await self.키워드_맞춤_포스트_탐색_함수()
                 
             else:
-                if self.post_list:
-                    self.return_text = '일부 포스트만 추천'
+                if self.반환포스트리스트:
+                    self.반환텍스트 = '일부 포스트만 추천'
                 else:
-                    self.return_text = '추천 키워드 및 포스트 없음'
+                    self.반환텍스트 = '추천 키워드 및 포스트 없음'
                     
-                self.completion_status = True
+                self.실행완료여부 = True
     
-    # 작업 실행 및 결과 반환을 위한 메인 메서드
-    async def get_post_match_keyword(self, user, login_yn):
+    def 반환데이터정리(self):
+        최종반환데이터 = {
+            '포스트출처': self.키워드리스트출처,
+            '반환텍스트': self.반환텍스트,
+            '반환포스트': self.반환포스트리스트,
+        }
+        return 최종반환데이터
+    
+    # 키워드 리스트 설정
+    async def 메인메서드(self, user):
         
         # 유저 로그린 여부 따른 메서드 실행
-        if login_yn and await sync_to_async(UserSearchKeyword.objects.filter(user=user).exists)(): # 사용자가 로그인 상태이고, 해당 유저 키워드가 있으면 실행
-            self.keyword_source = 'User'
-            keyword_number = await sync_to_async(UserSearchKeyword.objects.filter(user=user).count)() # 메모리 절약을 위해 count로 레코드 갯수만 확인
-            if keyword_number > self.db_keyword_number:
-                user_keyword_list = await sync_to_async(list)(UserSearchKeyword.objects.filter(user=user)[:self.db_keyword_number])
-                
-                for keywords in user_keyword_list:
-                    managers = keywords.search_keyword
-                    
-                    related_keywords = await sync_to_async(list)(managers.all())
-                    
-                    self.db_keyword_list.extend([keyword.keyword for keyword in related_keywords])
+        if user.is_authenticated and UserSearchKeyword.objects.filter(user=user).exists(): # 사용자가 로그인 상태이고, 해당 유저 키워드가 있으면 실행
+            self.키워드리스트출처 = 'User'
+            db_레코드_갯수 = UserSearchKeyword.objects.filter(user=user).count() # 메모리 절약을 위해 count로 레코드 갯수만 확인
+            if db_레코드_갯수 > self.키워드호출갯수:
+                self.키워드캐싱리스트 = list(UserSearchKeyword.objects.filter(user=user)[:self.키워드호출갯수])
             else:
-                db_keyword_list = await sync_to_async(list)(UserSearchKeyword.objects.filter(user=user))
-                
-                for keywords in db_keyword_list:
-                    managers = keywords.search_keyword
-                    
-                    related_keywords = await sync_to_async(list)(managers.all())
-                    
-                    self.db_keyword_list.extend([keyword.keyword for keyword in related_keywords])
+                self.키워드캐싱리스트 = list(UserSearchKeyword.objects.filter(user=user))
             
-        elif await sync_to_async(SearchKeyword.objects.filter().exists)(): # 전체 키워드가 있으면 실행
-            self.keyword_source = 'Total'
-            await self.shared_keyword_get_save()
+        elif SearchKeyword.objects.filter().exists(): # 사용자가 비로그인 상태이면, 전체 키워드가 있으면 실행
+            self.키워드리스트출처 = 'Total'
+            self.전체키워드호출및저장_메서드()
             
         else: # 로그인 유저도 아니고, 전체 키워드에도 키워드가 없으면 실행
-            self.return_text = '추천 키워드 없음.'
-            self.completion_status = True
+            self.반환텍스트 = '추천 키워드 없음.'
+            최종반환데이터 = self.반환데이터정리() # 추후 출력 함수에 해당 데이터 첨부하여 실행
+            return 최종반환데이터
 
-        await sync_to_async(self.modify_class_variables)()
-        await self.post_search()
+        self.키워드리스트_선행_작업_메서드()
+        await self.키워드_맞춤_포스트_탐색_함수()
         
-        while self.completion_status == False:
+        while self.실행완료여부 == False:
             await asyncio.sleep(2) # 반복 메서드들의 작업 완료 여부를 2초마다 확인
             
-        # logger.debug('포스트 리스트 %s', self.post_list)
-        # logger.debug('반환 텍스트: %s', self.return_text)
+        최종반환데이터 = self.반환데이터정리()
         
-        return  self.post_list, self.return_text, True
+        return 최종반환데이터
